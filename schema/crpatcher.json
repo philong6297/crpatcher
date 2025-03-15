@@ -5,22 +5,28 @@
   "description": "The .crpatcher file is a YAML file defining configuration for the crpatcher tool.",
   "type": "object",
   "properties": {
-    "chromium_src_dir": {
-      "type": "string",
-      "description": "The path to your Chromium-based src/ directory."
-    },
-    "patches_dir": {
-      "type": "string",
-      "description": "The path to your patches directory, where you store your patches for Chromium-based submodules/third-party repos."
-    },
-    "submodule_dirs": {
+    "repositories": {
       "type": "array",
-      "description": "The list of repository subdirectories to be patched. Each directory must be relative to chromium_src_dir and use Posix style.",
       "items": {
-        "type": "string"
-      }
+        "type": "object",
+        "properties": {
+          "repo_dir": {
+            "type": "string",
+            "description": "The path to the repository directory."
+          },
+          "patch_dir": {
+            "type": "string",
+            "description": "The path to the patch directory."
+          }
+        },
+        "required": [
+          "repo_dir",
+          "patch_dir"
+        ]
+      },
+      "default": []
     },
-    "patchinfo_file": {
+    "patchinfo": {
       "type": "object",
       "description": "The configuration for the patchinfo file.",
       "properties": {
@@ -36,19 +42,24 @@
         },
         "ext": {
           "type": "string",
-          "description": "The extension of the patchinfo file. Default: .patchinfo",
-          "default": ".patchinfo"
+          "description": "The extension of the patchinfo file. Default: patchinfo",
+          "default": "patchinfo"
         }
       }
     },
-    "patch_file": {
+    "patch": {
       "type": "object",
       "description": "The configuration for the patch file.",
       "properties": {
+        "encoding": {
+          "type": "string",
+          "description": "The encoding of the patchinfo file. Default: utf-8",
+          "default": "utf-8"
+        },
         "ext": {
           "type": "string",
-          "description": "The extension of the patch file. Default: .patch",
-          "default": ".patch"
+          "description": "The extension of the patch file. Default: patch",
+          "default": "patch"
         },
         "replacement_separator": {
           "type": "string",
@@ -57,10 +68,5 @@
         }
       }
     }
-  },
-  "required": [
-    "chromium_src_dir",
-    "patches_dir",
-    "submodule_dirs"
-  ]
+  }
 }

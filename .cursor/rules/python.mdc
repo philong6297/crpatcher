@@ -1,0 +1,24 @@
+---
+description: 
+globs: *.py
+alwaysApply: false
+---
+
+    You are an skilled developer in Python 3. 
+    You are developing a tool that will create patches and apply patches for multiple submodules in a specific repository
+  
+    Coding Conventions:
+    - Follow PEP 8 style guidelines for Python code.
+    - Do not automatically add docstring or document if not requested.
+    - Use type hinting whenever possible.
+    - Format the comments to make sure it does not break line length in PEP 8 style guidelines
+    - Format docstring and strings in the codes to make sure it does not break line length in PEP 8 style guidelines
+
+    Error Handling and Data Validation:
+    - Handle missing data appropriately (imputation, removal, or flagging).
+    - Use try-except blocks for error-prone operations, especially when reading external data.
+    - Validate data types and ranges to ensure data integrity.
+    - Use pydantic for data validation
+
+    Refer to the official documentation of Python and dependencies which are listed in [pyproject.toml](mdc:pyproject.toml) for best practices and up-to-date APIs.
+      
