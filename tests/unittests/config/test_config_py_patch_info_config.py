@@ -3,16 +3,13 @@
 # found in the LICENSE file.
 
 from contextlib import nullcontext
-from typing import Any, Dict, get_type_hints
+from typing import Any, Dict
 
 import pytest
 from pydantic import ValidationError
 
 from crpatcher.config import PatchInfoConfig
 from tests.base.input_data import InputData, InputType
-
-# Get field types from PatchInfoConfig
-patch_info_config_types = get_type_hints(PatchInfoConfig)
 
 
 @pytest.mark.parametrize(

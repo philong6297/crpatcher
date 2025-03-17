@@ -6,11 +6,10 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Optional, Self, final
+from typing import Optional, Self, final, Any
 
 from pydantic import BaseModel, DirectoryPath, Field, ValidationInfo, model_validator
 
-from crpatcher.base import NoPublicConstructor
 from crpatcher.config.program_validation_context import ProgramValidationContext
 from crpatcher.config.util import CRPATCHER_STRICT_CONFIG_DICT
 
@@ -18,10 +17,16 @@ __all__ = ["RepositoryConfig"]
 
 
 @final
-class RepositoryConfig(BaseModel, metaclass=NoPublicConstructor):
+class RepositoryConfig(BaseModel):
     model_config = CRPATCHER_STRICT_CONFIG_DICT
     repo_dir: Path = Field()
     patch_dir: Path = Field()
+
+    @staticmethod
+    def create_with_context(
+        program_context: Optional[ProgramValidationContext], **kwargs: Any
+    ) -> RepositoryConfig:
+        return RepositoryConfig.model_validate(kwargs, context=program_context)
 
     @model_validator(mode="after")
     def _resolve_directories(self, info: ValidationInfo) -> Self:
@@ -32,6 +37,7 @@ class RepositoryConfig(BaseModel, metaclass=NoPublicConstructor):
         )
 
         # Create new instance with resolved paths, without validating
+        # TODO(longlp): warning: Returning anything other than `self` from a top level model validator isn't supported when validating via `__init__`.
         return self.model_construct(
             repo_dir=_resolve_dir(self.repo_dir, base_dir),
             patch_dir=_resolve_dir(self.patch_dir, base_dir),

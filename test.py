@@ -1,20 +1,29 @@
-from pydantic import BaseModel, ConfigDict, Field
+from timeit import timeit
+
+from typing_extensions import TypedDict
+
+from pydantic import BaseModel, TypeAdapter
 
 
-class A(BaseModel):
-    a: int = Field(
-        default=1,
-        ge=1,
-        allow_inf_nan=False,
-    )
-
-    model_config = ConfigDict(
-        extra="forbid",
-        frozen=True,
-        validate_assignment=True,
-        strict=True,
-    )
+class A(TypedDict):
+    a: str
+    b: int
 
 
-instance = A(a=1)
-instance.model_dump()
+class TypedModel(TypedDict):
+    a: A
+
+
+class B(BaseModel):
+    a: str
+    b: int
+
+
+class Model(BaseModel):
+    b: B
+
+
+ta = TypeAdapter(TypedModel)
+result1 = timeit(lambda: ta.validate_python({"a": {"a": "a", "b": 2}}), number=10000)
+result2 = timeit(lambda: Model.model_validate({"b": {"a": "a", "b": 2}}), number=10000)
+print(result2 / result1)
