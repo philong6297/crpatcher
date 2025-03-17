@@ -3,7 +3,7 @@
 # found in the LICENSE file.
 
 from enum import Enum
-from typing import Generic, Optional, TypeVar
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, model_validator
 from typing_extensions import Self
@@ -15,11 +15,8 @@ class InputType(Enum):
     INVALID = 2
 
 
-T = TypeVar("T")
-
-
-class InputData(BaseModel, Generic[T]):
-    value: Optional[T] = None
+class InputData(BaseModel):
+    value: Any = None
     type: InputType = InputType.DEFAULT
 
     model_config = ConfigDict(

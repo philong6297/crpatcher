@@ -3,50 +3,43 @@
 # found in the LICENSE file.
 
 from contextlib import nullcontext
-from typing import Any, Dict, get_type_hints
+from typing import Any, Dict
 
 import pytest
 from pydantic import ValidationError
 
 from crpatcher.config import PatchConfig
-from tests.utils import InputData, InputType
-
-# Get field types from PatchConfig
-patch_config_types = get_type_hints(PatchConfig)
-
-ExtType = InputData[patch_config_types["ext"]]
-EncodingType = InputData[patch_config_types["encoding"]]
-ReplacementSeparatorType = InputData[patch_config_types["replacement_separator"]]
+from tests.base.input_data import InputData, InputType
 
 
 @pytest.mark.parametrize(
     "ext",
     [
-        ExtType(),
-        ExtType(value="custom_patch", type=InputType.CUSTOM),
-        ExtType(value="invalid-ext", type=InputType.INVALID),
+        InputData(),
+        InputData(value="custom_patch", type=InputType.CUSTOM),
+        InputData(value="invalid-ext", type=InputType.INVALID),
     ],
 )
 @pytest.mark.parametrize(
     "encoding",
     [
-        EncodingType(),
-        EncodingType(value="ascii", type=InputType.CUSTOM),
-        EncodingType(value="invalid_encoding", type=InputType.INVALID),
+        InputData(),
+        InputData(value="ascii", type=InputType.CUSTOM),
+        InputData(value="invalid_encoding", type=InputType.INVALID),
     ],
 )
 @pytest.mark.parametrize(
     "replacement_separator",
     [
-        ReplacementSeparatorType(),
-        ReplacementSeparatorType(value="underscore", type=InputType.CUSTOM),
-        ReplacementSeparatorType(value="invalid-sep", type=InputType.INVALID),
+        InputData(),
+        InputData(value="underscore", type=InputType.CUSTOM),
+        InputData(value="invalid-sep", type=InputType.INVALID),
     ],
 )
 def test_patch_config(
-    ext: ExtType,
-    encoding: EncodingType,
-    replacement_separator: ReplacementSeparatorType,
+    ext: InputData,
+    encoding: InputData,
+    replacement_separator: InputData,
 ) -> None:
     # Determine if any field has invalid value
     should_raise_error = any(

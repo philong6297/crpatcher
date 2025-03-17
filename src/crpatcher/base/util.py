@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import codecs
 import hashlib
 import logging
 from dataclasses import fields, is_dataclass
@@ -9,9 +10,18 @@ from typing import Any, Dict, Type, TypeVar
 __all__ = [
     "calculate_file_checksum",
     "validate_dict_keys_match_dataclass",
+    "exists_encoding",
 ]
 
 _logger = logging.getLogger(__name__)
+
+
+def exists_encoding(enc: str) -> bool:
+    try:
+        codecs.lookup(enc)
+    except LookupError:
+        return False
+    return True
 
 
 def calculate_file_checksum(file_path: Path, buffer_size: int = 8192) -> str:

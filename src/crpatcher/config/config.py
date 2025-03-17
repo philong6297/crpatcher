@@ -6,19 +6,23 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
-from typing import Self
+from typing import Optional, Self
 
 import yaml
 from pydantic import (
     BaseModel,
     ConfigDict,
+    DirectoryPath,
     Field,
     FilePath,
     ValidationInfo,
+    field_validator,
     model_validator,
-    with_config,
 )
+
+from crpatcher.base import exists_encoding
 
 __all__ = [
     "ProgramConfig",
@@ -28,80 +32,49 @@ __all__ = [
     "ProgramValidationContext",
 ]
 
-_STRICT_CONFIG_DICT = ConfigDict(
-    extra="forbid",
-    frozen=True,
-    validate_assignment=True,
-    strict=True,
-)
 
-
-@with_config(_STRICT_CONFIG_DICT)
-class ProgramValidationContext(BaseModel):
-    config_file: FilePath = Field()
-
-
-@with_config(_STRICT_CONFIG_DICT)
-class PatchInfoConfig(BaseModel):
-    version: int = Field(
-        default=1,
-        ge=1,
-        allow_inf_nan=False,
-    )
-    encoding: str = Field(
-        default="utf-8",
-    )
-    ext: str = Field(
-        default="patchinfo",
-        pattern=r"^\w+$",
-    )
-
-
-@with_config(_STRICT_CONFIG_DICT)
-class PatchConfig(BaseModel):
-    ext: str = Field(
-        default="patch",
-        pattern=r"^\w+$",
-    )
-    encoding: str = Field(
-        default="utf-8",
-    )
-    replacement_separator: str = Field(
-        default="-",
-        pattern=r"^\w+$",
-    )
-
-
-@with_config(_STRICT_CONFIG_DICT)
 class RepositoryConfig(BaseModel):
+    model_config = _STRICT_CONFIG_DICT
     repo_dir: Path = Field()
     patch_dir: Path = Field()
 
     @model_validator(mode="after")
     def _resolve_directories(self, info: ValidationInfo) -> Self:
-        if not info.context or not isinstance(info.context, ProgramValidationContext):
-            raise ValueError("Missing program validation context")
+        def _resolve_dir(dir: Path, base_dir: Optional[DirectoryPath]) -> Path:
+            if dir.is_absolute():
+                if not dir.is_dir():
+                    raise ValueError(f'Directory not found: "{dir.as_posix()}"')
+                return dir
 
-        config_file = info.context.config_file
-        base_dir = config_file.parent
+            if base_dir is None:
+                raise ValueError(
+                    f'Missing program validation context, used for resolving "{dir.as_posix()}"'
+                )
 
-        # Resolve repo_dir, if it's not absolute, join it with config file's base directory
-        if not self.repo_dir.is_absolute():
-            self.repo_dir = base_dir.joinpath(self.repo_dir).resolve(strict=True)
-        if not self.repo_dir.is_dir():
-            raise ValueError(f"Repository directory not found: {self.repo_dir}")
+            try:
+                resolved_dir = base_dir.joinpath(dir).resolve(strict=True)
+            except OSError as e:
+                raise ValueError(
+                    f'Cannot resolve directory "{dir.as_posix()}".{os.linesep}Error: {e}'
+                ) from e
+            return resolved_dir
 
-        # Resolve patch_dir, if it's not absolute, join it with config file's base directory
-        if not self.patch_dir.is_absolute():
-            self.patch_dir = base_dir.joinpath(self.patch_dir).resolve(strict=True)
-        if not self.patch_dir.is_dir():
-            raise ValueError(f"Patch directory not found: {self.patch_dir}")
+        base_dir = (
+            info.context.config_file.parent
+            if isinstance(info.context, ProgramValidationContext)
+            else None
+        )
 
-        return self
+        # Create new instance with resolved paths, without validating
+        return self.model_construct(
+            repo_dir=_resolve_dir(self.repo_dir, base_dir),
+            patch_dir=_resolve_dir(self.patch_dir, base_dir),
+        )
 
 
-@with_config(_STRICT_CONFIG_DICT)
 class ProgramConfig(BaseModel):
+    model_config = _STRICT_CONFIG_DICT
+
     repositories: list[RepositoryConfig] = Field(
         default_factory=list,
     )
