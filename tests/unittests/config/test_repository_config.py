@@ -39,23 +39,32 @@ class PathTestData(NamedTuple):
 
 
 def _make_path_fixture(
-    prefix: str,
+    path_name: str,
 ) -> Callable[[Path, Path, Path, pytest.FixtureRequest], PathTestData]:
-    """Create a fixture for testing paths with given prefix."""
+    PATH_CONDITIONS = itertools.product(
+        [
+            True,  # exist path
+            False,  # non-exist path
+        ],
+        [
+            True,  # use absolute path
+            False,  # use relative path
+        ],
+    )
+
+    def id_generator(condition: tuple[bool, bool]) -> str:
+        use_valid_path, use_absolute_path = condition
+
+        return (
+            f"{path_name}_"
+            f"{'valid' if use_valid_path else 'invalid'}_"
+            f"{'absolute' if use_absolute_path else 'relative'}"
+        )
 
     @pytest.fixture(
         scope="class",
-        params=itertools.product(
-            [
-                True,  # exist path
-                False,  # non-exist path
-            ],
-            [
-                True,  # use absolute path
-                False,  # use relative path
-            ],
-        ),
-        ids=lambda param: f"{prefix}_{'valid' if param[0] else 'invalid'}_{'absolute' if param[1] else 'relative'}",
+        params=PATH_CONDITIONS,
+        ids=id_generator,
     )
     def _path_fixture(
         crpatcher_test_base_dir: Path,
@@ -97,7 +106,6 @@ class TestRepositoryConfig:
     ) -> None:
         # Test repository config construction behavior.
         # When using absolute paths (needs_context=False), direct constructor should work. Otherwise, it should raise ValidationError.
-        #
 
         needs_context = not (
             repo_dir_fixture.use_absolute_path and patch_dir_fixture.use_absolute_path

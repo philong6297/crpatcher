@@ -6,9 +6,9 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Optional, Self, final, Any
+from typing import Any, Optional, final
 
-from pydantic import BaseModel, DirectoryPath, Field, ValidationInfo, model_validator
+from pydantic import BaseModel, Field, ValidationInfo, field_validator
 
 from crpatcher.config.program_validation_context import ProgramValidationContext
 from crpatcher.config.util import CRPATCHER_STRICT_CONFIG_DICT
@@ -28,37 +28,30 @@ class RepositoryConfig(BaseModel):
     ) -> RepositoryConfig:
         return RepositoryConfig.model_validate(kwargs, context=program_context)
 
-    @model_validator(mode="after")
-    def _resolve_directories(self, info: ValidationInfo) -> Self:
+    @field_validator("repo_dir", "patch_dir", mode="after")
+    @classmethod
+    def _resolve_directory(cls, dir: Path, info: ValidationInfo) -> Path:
+        # if there is a valid ProgramValidationContext, base_dir is already valid. Dont need to check its existence
         base_dir = (
             info.context.config_file.parent
             if isinstance(info.context, ProgramValidationContext)
             else None
         )
 
-        # Create new instance with resolved paths, without validating
-        # TODO(longlp): warning: Returning anything other than `self` from a top level model validator isn't supported when validating via `__init__`.
-        return self.model_construct(
-            repo_dir=_resolve_dir(self.repo_dir, base_dir),
-            patch_dir=_resolve_dir(self.patch_dir, base_dir),
-        )
+        if dir.is_absolute():
+            if not dir.is_dir():
+                raise ValueError(f'Directory not found: "{dir.as_posix()}"')
+            return dir
 
+        if base_dir is None:
+            raise ValueError(
+                f'Missing program validation context, used for resolving "{dir.as_posix()}"'
+            )
 
-def _resolve_dir(dir: Path, base_dir: Optional[DirectoryPath]) -> Path:
-    if dir.is_absolute():
-        if not dir.is_dir():
-            raise ValueError(f'Directory not found: "{dir.as_posix()}"')
-        return dir
-
-    if base_dir is None:
-        raise ValueError(
-            f'Missing program validation context, used for resolving "{dir.as_posix()}"'
-        )
-
-    try:
-        resolved_dir = base_dir.joinpath(dir).resolve(strict=True)
-    except OSError as e:
-        raise ValueError(
-            f'Cannot resolve directory "{dir.as_posix()}".{os.linesep}Error: {e}'
-        ) from e
-    return resolved_dir
+        try:
+            resolved_dir = base_dir.joinpath(dir).resolve(strict=True)
+        except OSError as e:
+            raise ValueError(
+                f'Cannot resolve directory "{dir.as_posix()}".{os.linesep}Error: {e}'
+            ) from e
+        return resolved_dir

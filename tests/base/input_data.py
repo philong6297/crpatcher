@@ -10,9 +10,9 @@ from typing_extensions import Self
 
 
 class InputType(Enum):
-    DEFAULT = 0
-    CUSTOM = 1
-    INVALID = 2
+    DEFAULT = 0  # input parameter uses default value
+    CUSTOM = 1  # explicitly set value
+    INVALID = 2  # invalid value
 
 
 class InputData(BaseModel):

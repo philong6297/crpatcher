@@ -32,8 +32,8 @@ from tests.base.input_data import InputData, InputType
     "replacement_separator",
     [
         InputData(),
-        InputData(value="underscore", type=InputType.CUSTOM),
-        InputData(value="invalid-sep", type=InputType.INVALID),
+        InputData(value="under-score", type=InputType.CUSTOM),
+        InputData(value="invalid+sep", type=InputType.INVALID),
     ],
 )
 def test_patch_config(

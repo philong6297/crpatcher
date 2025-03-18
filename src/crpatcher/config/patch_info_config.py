@@ -24,7 +24,7 @@ class PatchInfoConfig(BaseModel):
     )
     ext: str = Field(
         default="patchinfo",
-        pattern=r"^\w+$",
+        pattern=r"^\w+$",  # matches all alphanumeric characters and _
     )
 
     @field_validator("encoding", mode="after")
