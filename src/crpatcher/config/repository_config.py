@@ -8,7 +8,7 @@ import os
 from pathlib import Path
 from typing import Any, Optional, final
 
-from pydantic import BaseModel, Field, ValidationInfo, field_validator
+from pydantic import BaseModel, Field, ValidationInfo, field_serializer, field_validator
 
 from crpatcher.config.program_validation_context import ProgramValidationContext
 from crpatcher.config.util import CRPATCHER_STRICT_CONFIG_DICT
@@ -55,3 +55,7 @@ class RepositoryConfig(BaseModel):
                 f'Cannot resolve directory "{dir.as_posix()}".{os.linesep}Error: {e}'
             ) from e
         return resolved_dir
+
+    @field_serializer("repo_dir", "patch_dir")
+    def _serialize_path(self, path: Path, _info: Any) -> str:
+        return str(path)

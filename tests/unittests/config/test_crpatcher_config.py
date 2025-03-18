@@ -2,13 +2,13 @@
 # Use of this source code is governed by a MIT license that can be
 # found in the LICENSE file.
 
-from contextlib import nullcontext
-from pathlib import Path
+from __future__ import annotations
+
+from pathlib import Path, PurePath
 from typing import Any, Dict
 
 import pytest
 import yaml
-from pydantic import ValidationError
 
 from crpatcher.config import (
     CRPatcherConfig,
@@ -19,8 +19,18 @@ from crpatcher.config import (
 )
 from tests.base.input_data import InputData, InputType
 
+_CRPATCHER_CONFIG_DEFAULT_VALUES: Dict[str, Any] = {
+    "patch_config": PatchConfig(),
+    "patch_info_config": PatchInfoConfig(),
+    "repositories": [],
+}
 
-@pytest.fixture(scope="class", params=[InputType.DEFAULT, InputType.CUSTOM])
+
+@pytest.fixture(
+    scope="class",
+    params=[InputType.DEFAULT, InputType.CUSTOM],
+    ids=["default", "custom"],
+)
 def valid_patch_config_fixt(request: pytest.FixtureRequest) -> InputData:
     if request.param == InputType.DEFAULT:
         return InputData()
@@ -38,7 +48,11 @@ def valid_patch_config_fixt(request: pytest.FixtureRequest) -> InputData:
     # No need to test invalid data since it will be validated by Pydantic, see src/crpatcher/config/patch_config.py
 
 
-@pytest.fixture(scope="class", params=[InputType.DEFAULT, InputType.CUSTOM])
+@pytest.fixture(
+    scope="class",
+    params=[InputType.DEFAULT, InputType.CUSTOM],
+    ids=["default", "custom"],
+)
 def valid_patch_info_config_fixt(request: pytest.FixtureRequest) -> InputData:
     if request.param == InputType.DEFAULT:
         return InputData()
@@ -56,7 +70,11 @@ def valid_patch_info_config_fixt(request: pytest.FixtureRequest) -> InputData:
     # No need to test invalid data since it will be validated by Pydantic, see src/crpatcher/config/patch_info_config.py
 
 
-@pytest.fixture(scope="class", params=[InputType.DEFAULT, InputType.CUSTOM])
+@pytest.fixture(
+    scope="class",
+    params=[InputType.DEFAULT, InputType.CUSTOM],
+    ids=["default", "custom"],
+)
 def valid_repositories_fixt(
     crpatcher_test_base_dir: Path,
     crpatcher_existing_empty_dir: Path,
@@ -102,66 +120,7 @@ def valid_repositories_fixt(
     # no need to test invalid data since it will be validated by Pydantic, see src/crpatcher/config/repository_config.py
 
 
-@pytest.fixture(scope="class")
-def config_file_fixture(
-    crpatcher_test_base_dir: Path,
-    crpatcher_existing_empty_dir: Path,
-) -> Path:
-    config_file = crpatcher_test_base_dir / "config.yaml"
-    config_data = {
-        "patch_config": {
-            "ext": "custom_ext",
-            "encoding": "ascii",
-            "replacement_separator": "custom-replacement-separator",
-        },
-        "patch_info_config": {
-            "version": 2,
-            "ext": "custom_ext",
-            "encoding": "ascii",
-        },
-        "repositories": [
-            {
-                "repo_dir": str(crpatcher_existing_empty_dir),
-                "patch_dir": str(crpatcher_existing_empty_dir),
-            }
-        ],
-    }
-    with config_file.open("w", encoding="utf-8") as f:
-        yaml.dump(config_data, f)
-    return config_file
-
-
 class TestCRPatcherConfig:
-    def test_create_from_config_file(
-        self,
-        config_file_fixture: Path,
-        crpatcher_existing_empty_dir: Path,
-    ) -> None:
-        config = CRPatcherConfig.create_from_config_file(config_file_fixture)
-
-        # Verify patch config
-        assert config.patch_config.ext == "custom_ext"
-        assert config.patch_config.encoding == "ascii"
-        assert (
-            config.patch_config.replacement_separator == "custom-replacement-separator"
-        )
-
-        # Verify patch info config
-        assert config.patch_info_config.version == 2
-        assert config.patch_info_config.ext == "custom_ext"
-        assert config.patch_info_config.encoding == "ascii"
-
-        # Verify repository config
-        assert len(config.repositories) == 1
-        assert config.repositories[0].repo_dir == crpatcher_existing_empty_dir
-        assert config.repositories[0].patch_dir == crpatcher_existing_empty_dir
-
-    def test_create_from_config_file_not_found(
-        self,
-        crpatcher_non_existent_file: Path,
-    ) -> None:
-        with pytest.raises(FileNotFoundError):
-            CRPatcherConfig.create_from_config_file(crpatcher_non_existent_file)
 
     def test_direct_construction(
         self,
@@ -183,30 +142,101 @@ class TestCRPatcherConfig:
         if valid_repositories_fixt.type != InputType.DEFAULT:
             kwargs["repositories"] = valid_repositories_fixt.value
 
-        DEFAULT_VALUES: Dict[str, Any] = {
-            "patch_config": PatchConfig(),
-            "patch_info_config": PatchInfoConfig(),
-            "repositories": [],
-        }
-
         config = CRPatcherConfig(**kwargs)
 
         # For assertions, compare with value if not DEFAULT, otherwise use defaults
         assert config.patch_config == (
             valid_patch_config_fixt.value
             if valid_patch_config_fixt.type != InputType.DEFAULT
-            else DEFAULT_VALUES["patch_config"]
+            else _CRPATCHER_CONFIG_DEFAULT_VALUES["patch_config"]
         )
         assert config.patch_info_config == (
             valid_patch_info_config_fixt.value
             if valid_patch_info_config_fixt.type != InputType.DEFAULT
-            else DEFAULT_VALUES["patch_info_config"]
+            else _CRPATCHER_CONFIG_DEFAULT_VALUES["patch_info_config"]
         )
         assert config.repositories == (
             valid_repositories_fixt.value
             if valid_repositories_fixt.type != InputType.DEFAULT
-            else DEFAULT_VALUES["repositories"]
+            else _CRPATCHER_CONFIG_DEFAULT_VALUES["repositories"]
         )
+
+    def test_create_from_config_file_valid(
+        self,
+        crpatcher_test_base_dir: Path,
+        valid_patch_config_fixt: InputData,
+        valid_patch_info_config_fixt: InputData,
+        valid_repositories_fixt: InputData,
+    ) -> None:
+        valid_config_file = _create_valid_config_file(
+            crpatcher_test_base_dir,
+            valid_patch_config_fixt,
+            valid_patch_info_config_fixt,
+            valid_repositories_fixt,
+        )
+
+        config = CRPatcherConfig.create_from_config_file(valid_config_file)
+
+        assert config.patch_config == (
+            valid_patch_config_fixt.value
+            if valid_patch_config_fixt.type != InputType.DEFAULT
+            else _CRPATCHER_CONFIG_DEFAULT_VALUES["patch_config"]
+        )
+
+        assert config.patch_info_config == (
+            valid_patch_info_config_fixt.value
+            if valid_patch_info_config_fixt.type != InputType.DEFAULT
+            else _CRPATCHER_CONFIG_DEFAULT_VALUES["patch_info_config"]
+        )
+
+        assert config.repositories == (
+            valid_repositories_fixt.value
+            if valid_repositories_fixt.type != InputType.DEFAULT
+            else _CRPATCHER_CONFIG_DEFAULT_VALUES["repositories"]
+        )
+
+
+def _create_valid_config_file(
+    crpatcher_test_base_dir: Path,
+    valid_patch_config_fixt: InputData,
+    valid_patch_info_config_fixt: InputData,
+    valid_repositories_fixt: InputData,
+) -> Path:
+
+    # Construct the file name based on fixture states
+    patch_config_name = f"patch_config_{'default' if valid_patch_config_fixt.type == InputType.DEFAULT else 'custom'}"
+    patch_info_config_name = f"patch_info_config_{'default' if valid_patch_info_config_fixt.type == InputType.DEFAULT else 'custom'}"
+    repositories_name = f"repositories_{'default' if valid_repositories_fixt.type == InputType.DEFAULT else 'custom'}"
+    config_file_name = f"valid_config_{patch_config_name}_{patch_info_config_name}_{repositories_name}.yaml"
+    # Define the path for the config file
+    config_file = crpatcher_test_base_dir.joinpath(config_file_name)
+
+    if config_file.is_file():
+        raise FileExistsError(
+            f"Config file {config_file.as_posix()} already exists. It should be not at the time of running this test"
+        )
+
+    # Create a dictionary with non-default values
+    config_data: Dict[str, Any] = {}
+
+    if valid_patch_config_fixt.type != InputType.DEFAULT:
+        config_data["patch_config"] = valid_patch_config_fixt.value.model_dump()
+
+    if valid_patch_info_config_fixt.type != InputType.DEFAULT:
+        config_data["patch_info_config"] = (
+            valid_patch_info_config_fixt.value.model_dump()
+        )
+
+    if valid_repositories_fixt.type != InputType.DEFAULT:
+        config_data["repositories"] = [
+            repo.model_dump() for repo in valid_repositories_fixt.value
+        ]
+
+    # Write the dictionary to a YAML file
+    with config_file.open("w", encoding="utf-8") as file:
+        yaml.dump(config_data, file)
+
+    return config_file
 
 
 # invalid:
@@ -218,3 +248,9 @@ class TestCRPatcherConfig:
 # valid:
 # - custom value
 # - default value
+
+# def test_create_from_config_file_valid(self,
+#                                        valid_patch_config_fixt: InputData,
+#                                        valid_patch_info_config_fixt: InputData,
+#                                        valid_repositories_fixt: InputData,
+#                                        ) -> None:
