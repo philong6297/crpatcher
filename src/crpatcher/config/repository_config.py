@@ -56,6 +56,6 @@ class RepositoryConfig(BaseModel):
             ) from e
         return resolved_dir
 
-    @field_serializer("repo_dir", "patch_dir")
+    @field_serializer("repo_dir", "patch_dir", check_fields=True, when_used="json")
     def _serialize_path(self, path: Path, _info: Any) -> str:
-        return str(path)
+        return path.as_posix()

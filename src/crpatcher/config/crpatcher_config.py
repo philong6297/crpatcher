@@ -6,9 +6,6 @@
 
 from __future__ import annotations
 
-import tomllib
-from pathlib import Path
-
 from pydantic import BaseModel, Field, FilePath, validate_call
 
 from crpatcher.config.patch_config import PatchConfig
@@ -36,15 +33,17 @@ class CRPatcherConfig(BaseModel):
     )
 
     @staticmethod
-    # @validate_call(
-    #     config=CRPATCHER_STRICT_CONFIG,
-    #     validate_return=False,  # It is already validated
-    # )
+    @validate_call(
+        config=CRPATCHER_STRICT_CONFIG,
+        validate_return=False,  # It is already validated
+    )
     def create_from_config_file(
         config_file: FilePath,  # make sure the file exist
-    ) -> CRPatcherConfig:
-        with config_file.open("rb") as f:
-            config_data = tomllib.load(f)
+    ):  # No explicit return as per https://github.com/pydantic/pydantic/issues/11582
+        with config_file.open("r", encoding="utf-8") as f:
+            json_data = f.read()
 
-        program_context = ProgramValidationContext(config_file=config_file)
-        return CRPatcherConfig.model_validate(config_data, context=program_context)
+            program_context = ProgramValidationContext(config_file=config_file)
+            return CRPatcherConfig.model_validate_json(
+                json_data, context=program_context
+            )

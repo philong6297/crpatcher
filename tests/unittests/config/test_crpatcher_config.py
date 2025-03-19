@@ -8,8 +8,7 @@ from pathlib import Path
 from typing import Any, Dict, cast
 
 import pytest
-import tomlkit
-import tomlkit.toml_file
+import json
 
 from crpatcher.config import (
     CRPatcherConfig,
@@ -215,41 +214,28 @@ def _create_valid_config_file(
             f"Config file {config_file.as_posix()} already exists. It should be not at the time of running this test"
         )
 
-    # create a toml doc
-    toml_doc = tomlkit.document()
+    data: dict[str, Any] = {}
 
     if valid_patch_config_fixt.type != InputType.DEFAULT:
-        patch_config = cast(PatchConfig, valid_patch_config_fixt.value)
-        patch_config_table = tomlkit.table()
-        patch_config_table.add("ext", patch_config.ext)
-        patch_config_table.add("encoding", patch_config.encoding)
-        patch_config_table.add(
-            "replacement_separator", patch_config.replacement_separator
-        )
-        toml_doc.add("patch_config", patch_config_table)
+        data["patch_config"] = cast(
+            PatchConfig, valid_patch_config_fixt.value
+        ).model_dump()
 
     if valid_patch_info_config_fixt.type != InputType.DEFAULT:
-        patch_info_config = cast(PatchInfoConfig, valid_patch_info_config_fixt.value)
-        patch_info_config_table = tomlkit.table()
-        patch_info_config_table.add("version", patch_info_config.version)
-        patch_info_config_table.add("encoding", patch_info_config.encoding)
-        patch_info_config_table.add("ext", patch_info_config.ext)
-        toml_doc.add("patch_info_config", patch_info_config_table)
+        data["patch_info_config"] = cast(
+            PatchInfoConfig, valid_patch_info_config_fixt.value
+        ).model_dump()
 
     if valid_repositories_fixt.type != InputType.DEFAULT:
-        repo_aot = tomlkit.aot()
+        data["repositories"] = [
+            # RepositoryConfig contains pathlib.Path, which is not serializable by default
+            # need to load as json
+            json.loads(repo.model_dump_json())
+            for repo in cast(list[RepositoryConfig], valid_repositories_fixt.value)
+        ]
 
-        repositories = cast(list[RepositoryConfig], valid_repositories_fixt.value)
-        for repo in repositories:
-            repo_table = tomlkit.table()
-            repo_table.add("repo_dir", repo.repo_dir.as_posix())
-            repo_table.add("patch_dir", repo.patch_dir.as_posix())
-            repo_aot.append(repo_table)
-
-        toml_doc.add("repositories", repo_aot)
-
-    toml_file = tomlkit.toml_file.TOMLFile(config_file)
-    toml_file.write(toml_doc)
+    with config_file.open("w", encoding="utf-8") as f:
+        json.dump(data, f)
 
     return config_file
 
