@@ -6,16 +6,16 @@
 
 from __future__ import annotations
 
+import tomllib
 from pathlib import Path
 
-import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, FilePath, validate_call
 
 from crpatcher.config.patch_config import PatchConfig
 from crpatcher.config.patch_info_config import PatchInfoConfig
 from crpatcher.config.program_validation_context import ProgramValidationContext
 from crpatcher.config.repository_config import RepositoryConfig
-from crpatcher.config.util import CRPATCHER_STRICT_CONFIG_DICT
+from crpatcher.config.util import CRPATCHER_STRICT_CONFIG
 
 __all__ = [
     "CRPatcherConfig",
@@ -23,7 +23,7 @@ __all__ = [
 
 
 class CRPatcherConfig(BaseModel):
-    model_config = CRPATCHER_STRICT_CONFIG_DICT
+    model_config = CRPATCHER_STRICT_CONFIG
 
     repositories: list[RepositoryConfig] = Field(
         default_factory=list,
@@ -36,12 +36,15 @@ class CRPatcherConfig(BaseModel):
     )
 
     @staticmethod
-    def create_from_config_file(config_file: Path) -> CRPatcherConfig:
-        if not config_file.is_file():
-            raise FileNotFoundError(f"File not found: {config_file}")
-
-        with config_file.open("r", encoding="utf-8") as f:
-            config_data = yaml.safe_load(f)
+    # @validate_call(
+    #     config=CRPATCHER_STRICT_CONFIG,
+    #     validate_return=False,  # It is already validated
+    # )
+    def create_from_config_file(
+        config_file: FilePath,  # make sure the file exist
+    ) -> CRPatcherConfig:
+        with config_file.open("rb") as f:
+            config_data = tomllib.load(f)
 
         program_context = ProgramValidationContext(config_file=config_file)
         return CRPatcherConfig.model_validate(config_data, context=program_context)

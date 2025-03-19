@@ -4,11 +4,12 @@
 
 from __future__ import annotations
 
-from pathlib import Path, PurePath
-from typing import Any, Dict
+from pathlib import Path
+from typing import Any, Dict, cast
 
 import pytest
-import yaml
+import tomlkit
+import tomlkit.toml_file
 
 from crpatcher.config import (
     CRPatcherConfig,
@@ -29,7 +30,7 @@ _CRPATCHER_CONFIG_DEFAULT_VALUES: Dict[str, Any] = {
 @pytest.fixture(
     scope="class",
     params=[InputType.DEFAULT, InputType.CUSTOM],
-    ids=["default", "custom"],
+    ids=[f"patch_config_{type}" for type in [InputType.DEFAULT, InputType.CUSTOM]],
 )
 def valid_patch_config_fixt(request: pytest.FixtureRequest) -> InputData:
     if request.param == InputType.DEFAULT:
@@ -51,7 +52,7 @@ def valid_patch_config_fixt(request: pytest.FixtureRequest) -> InputData:
 @pytest.fixture(
     scope="class",
     params=[InputType.DEFAULT, InputType.CUSTOM],
-    ids=["default", "custom"],
+    ids=[f"patch_info_config_{type}" for type in [InputType.DEFAULT, InputType.CUSTOM]],
 )
 def valid_patch_info_config_fixt(request: pytest.FixtureRequest) -> InputData:
     if request.param == InputType.DEFAULT:
@@ -73,7 +74,7 @@ def valid_patch_info_config_fixt(request: pytest.FixtureRequest) -> InputData:
 @pytest.fixture(
     scope="class",
     params=[InputType.DEFAULT, InputType.CUSTOM],
-    ids=["default", "custom"],
+    ids=[f"repositories_{type}" for type in [InputType.DEFAULT, InputType.CUSTOM]],
 )
 def valid_repositories_fixt(
     crpatcher_test_base_dir: Path,
@@ -121,7 +122,6 @@ def valid_repositories_fixt(
 
 
 class TestCRPatcherConfig:
-
     def test_direct_construction(
         self,
         valid_patch_config_fixt: InputData,
@@ -202,7 +202,6 @@ def _create_valid_config_file(
     valid_patch_info_config_fixt: InputData,
     valid_repositories_fixt: InputData,
 ) -> Path:
-
     # Construct the file name based on fixture states
     patch_config_name = f"patch_config_{'default' if valid_patch_config_fixt.type == InputType.DEFAULT else 'custom'}"
     patch_info_config_name = f"patch_info_config_{'default' if valid_patch_info_config_fixt.type == InputType.DEFAULT else 'custom'}"
@@ -216,25 +215,41 @@ def _create_valid_config_file(
             f"Config file {config_file.as_posix()} already exists. It should be not at the time of running this test"
         )
 
-    # Create a dictionary with non-default values
-    config_data: Dict[str, Any] = {}
+    # create a toml doc
+    toml_doc = tomlkit.document()
 
     if valid_patch_config_fixt.type != InputType.DEFAULT:
-        config_data["patch_config"] = valid_patch_config_fixt.value.model_dump()
+        patch_config = cast(PatchConfig, valid_patch_config_fixt.value)
+        patch_config_table = tomlkit.table()
+        patch_config_table.add("ext", patch_config.ext)
+        patch_config_table.add("encoding", patch_config.encoding)
+        patch_config_table.add(
+            "replacement_separator", patch_config.replacement_separator
+        )
+        toml_doc.add("patch_config", patch_config_table)
 
     if valid_patch_info_config_fixt.type != InputType.DEFAULT:
-        config_data["patch_info_config"] = (
-            valid_patch_info_config_fixt.value.model_dump()
-        )
+        patch_info_config = cast(PatchInfoConfig, valid_patch_info_config_fixt.value)
+        patch_info_config_table = tomlkit.table()
+        patch_info_config_table.add("version", patch_info_config.version)
+        patch_info_config_table.add("encoding", patch_info_config.encoding)
+        patch_info_config_table.add("ext", patch_info_config.ext)
+        toml_doc.add("patch_info_config", patch_info_config_table)
 
     if valid_repositories_fixt.type != InputType.DEFAULT:
-        config_data["repositories"] = [
-            repo.model_dump() for repo in valid_repositories_fixt.value
-        ]
+        repo_aot = tomlkit.aot()
 
-    # Write the dictionary to a YAML file
-    with config_file.open("w", encoding="utf-8") as file:
-        yaml.dump(config_data, file)
+        repositories = cast(list[RepositoryConfig], valid_repositories_fixt.value)
+        for repo in repositories:
+            repo_table = tomlkit.table()
+            repo_table.add("repo_dir", repo.repo_dir.as_posix())
+            repo_table.add("patch_dir", repo.patch_dir.as_posix())
+            repo_aot.append(repo_table)
+
+        toml_doc.add("repositories", repo_aot)
+
+    toml_file = tomlkit.toml_file.TOMLFile(config_file)
+    toml_file.write(toml_doc)
 
     return config_file
 

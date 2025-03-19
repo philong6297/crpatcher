@@ -5,12 +5,13 @@
 from pydantic import ConfigDict
 
 # TODO(longlp): can we make it as private?
-CRPATCHER_STRICT_CONFIG_DICT = ConfigDict(
+CRPATCHER_STRICT_CONFIG = ConfigDict(
     extra="forbid",
     frozen=True,
     validate_assignment=True,
     strict=True,
     allow_inf_nan=False,
+    validate_default=True,
 )
 
-__all__ = ["CRPATCHER_STRICT_CONFIG_DICT"]
+__all__ = ["CRPATCHER_STRICT_CONFIG"]

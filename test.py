@@ -1,11 +1,3 @@
-from pathlib import Path
+from crpatcher.config import CRPatcherConfig
 
-from pydantic import FilePath
-
-
-def f(a: FilePath) -> None:
-    pass
-
-
-a = FilePath("a")
-f(a)
+print(CRPatcherConfig.model_json_schema())

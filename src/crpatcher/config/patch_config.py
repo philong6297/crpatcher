@@ -9,12 +9,12 @@ from typing import final
 from pydantic import BaseModel, Field, field_validator
 
 from crpatcher.base import exists_encoding
-from crpatcher.config.util import CRPATCHER_STRICT_CONFIG_DICT
+from crpatcher.config.util import CRPATCHER_STRICT_CONFIG
 
 
 @final
 class PatchConfig(BaseModel):
-    model_config = CRPATCHER_STRICT_CONFIG_DICT
+    model_config = CRPATCHER_STRICT_CONFIG
     ext: str = Field(
         default="patch",
         pattern=r"^\w+$",  # matches all alphanumeric characters and _

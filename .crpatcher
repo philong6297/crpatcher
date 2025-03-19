@@ -1,0 +1,16 @@
+#:schema file://./schema/crpatcher.json
+
+
+[patch_config]
+ext = "patch"
+encoding = "utf-8"
+replacement_separator = "-"
+
+[patch_info_config]
+version = 1
+encoding = "utf-8"
+ext = "patchinfo"
+
+[[repositories]]
+repo_dir = "third_party"
+patch_dir = "search_engines_data/resources"

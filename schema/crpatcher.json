@@ -1,72 +1,95 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://raw.githubusercontent.com/philong6297/crpatcher/refs/heads/main/schema/crpatcher.json",
-  "title": ".crpatcher config",
-  "description": "The .crpatcher file is a YAML file defining configuration for the crpatcher tool.",
-  "type": "object",
-  "properties": {
-    "repositories": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "repo_dir": {
-            "type": "string",
-            "description": "The path to the repository directory."
-          },
-          "patch_dir": {
-            "type": "string",
-            "description": "The path to the patch directory."
-          }
-        },
-        "required": [
-          "repo_dir",
-          "patch_dir"
-        ]
-      },
-      "default": []
-    },
-    "patchinfo": {
-      "type": "object",
-      "description": "The configuration for the patchinfo file.",
+  "$defs": {
+    "PatchConfig": {
+      "additionalProperties": false,
       "properties": {
-        "version": {
-          "type": "number",
-          "description": "The version of the patchinfo file. Default: 1",
-          "default": 1
+        "ext": {
+          "default": "patch",
+          "pattern": "^\\w+$",
+          "title": "Ext",
+          "type": "string"
         },
         "encoding": {
-          "type": "string",
-          "description": "The encoding of the patchinfo file. Default: utf-8",
-          "default": "utf-8"
-        },
-        "ext": {
-          "type": "string",
-          "description": "The extension of the patchinfo file. Default: patchinfo",
-          "default": "patchinfo"
-        }
-      }
-    },
-    "patch": {
-      "type": "object",
-      "description": "The configuration for the patch file.",
-      "properties": {
-        "encoding": {
-          "type": "string",
-          "description": "The encoding of the patchinfo file. Default: utf-8",
-          "default": "utf-8"
-        },
-        "ext": {
-          "type": "string",
-          "description": "The extension of the patch file. Default: patch",
-          "default": "patch"
+          "default": "utf-8",
+          "title": "Encoding",
+          "type": "string"
         },
         "replacement_separator": {
-          "type": "string",
-          "description": "The replacement separator of the patch file. Default: -. For example, given base/win/embedded_i18n/create_string.cc, its patch will be base-win-embedded_i18n-create_string.cc.patch",
-          "default": "-"
+          "default": "-",
+          "pattern": "^[\\w-]+$",
+          "title": "Replacement Separator",
+          "type": "string"
         }
-      }
+      },
+      "title": "PatchConfig",
+      "type": "object"
+    },
+    "PatchInfoConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "version": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Version",
+          "type": "integer"
+        },
+        "encoding": {
+          "default": "utf-8",
+          "title": "Encoding",
+          "type": "string"
+        },
+        "ext": {
+          "default": "patchinfo",
+          "pattern": "^\\w+$",
+          "title": "Ext",
+          "type": "string"
+        }
+      },
+      "title": "PatchInfoConfig",
+      "type": "object"
+    },
+    "RepositoryConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "repo_dir": {
+          "format": "path",
+          "title": "Repo Dir",
+          "type": "string"
+        },
+        "patch_dir": {
+          "format": "path",
+          "title": "Patch Dir",
+          "type": "string"
+        }
+      },
+      "required": [
+        "repo_dir",
+        "patch_dir"
+      ],
+      "title": "RepositoryConfig",
+      "type": "object"
     }
-  }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "repositories": {
+      "items": {
+        "$ref": "#/$defs/RepositoryConfig"
+      },
+      "title": "Repositories",
+      "type": "array",
+      "default": []
+    },
+    "patch_info_config": {
+      "$ref": "#/$defs/PatchInfoConfig",
+      "default": {}
+    },
+    "patch_config": {
+      "$ref": "#/$defs/PatchConfig",
+      "default": {}
+    }
+  },
+  "$schema": "https://json-schema.org/draft-07/schema",
+  "title": "CRPatcherConfig",
+  "type": "object"
 }

@@ -11,14 +11,14 @@ from typing import Any, Optional, final
 from pydantic import BaseModel, Field, ValidationInfo, field_serializer, field_validator
 
 from crpatcher.config.program_validation_context import ProgramValidationContext
-from crpatcher.config.util import CRPATCHER_STRICT_CONFIG_DICT
+from crpatcher.config.util import CRPATCHER_STRICT_CONFIG
 
 __all__ = ["RepositoryConfig"]
 
 
 @final
 class RepositoryConfig(BaseModel):
-    model_config = CRPATCHER_STRICT_CONFIG_DICT
+    model_config = CRPATCHER_STRICT_CONFIG
     repo_dir: Path = Field()
     patch_dir: Path = Field()
 
