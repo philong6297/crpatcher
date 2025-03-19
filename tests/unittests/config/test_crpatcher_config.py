@@ -28,24 +28,31 @@ _CRPATCHER_CONFIG_DEFAULT_VALUES: Dict[str, Any] = {
 
 @pytest.fixture(
     scope="class",
-    params=[InputType.DEFAULT, InputType.CUSTOM],
-    ids=[f"patch_config_{type}" for type in [InputType.DEFAULT, InputType.CUSTOM]],
+    params=[type for type in InputType],
+    ids=[f"patch_config_{type}" for type in InputType],
 )
-def valid_patch_config_fixt(request: pytest.FixtureRequest) -> InputData:
-    if request.param == InputType.DEFAULT:
-        return InputData()
-
-    # Custom input
-    return InputData(
-        value=PatchConfig(
-            ext="custom_ext",
-            encoding="ascii",
-            replacement_separator="custom-replacement-separator",
-        ),
-        type=InputType.CUSTOM,
-    )
-
-    # No need to test invalid data since it will be validated by Pydantic, see src/crpatcher/config/patch_config.py
+def patch_config_fixt(request: pytest.FixtureRequest) -> InputData:
+    match cast(InputType, request.param):
+        case InputType.DEFAULT:
+            return InputData()
+        case InputType.CUSTOM:
+            return InputData(
+                value=PatchConfig(
+                    ext="custom_ext",
+                    encoding="ascii",
+                    replacement_separator="custom-replacement-separator",
+                ),
+                type=InputType.CUSTOM,
+            )
+        case InputType.INVALID:
+            return InputData(
+                value=PatchConfig(
+                    ext="invalid-ext",
+                    encoding="invalid-encoding",
+                    replacement_separator="invalid+sep",
+                ),
+                type=InputType.INVALID,
+            )
 
 
 @pytest.fixture(
@@ -123,7 +130,7 @@ def valid_repositories_fixt(
 class TestCRPatcherConfig:
     def test_direct_construction(
         self,
-        valid_patch_config_fixt: InputData,
+        patch_config_fixt: InputData,
         valid_patch_info_config_fixt: InputData,
         valid_repositories_fixt: InputData,
     ) -> None:
@@ -134,8 +141,8 @@ class TestCRPatcherConfig:
         # Build kwargs dict only including non-DEFAULT fields
         kwargs: Dict[str, Any] = {}
 
-        if valid_patch_config_fixt.type != InputType.DEFAULT:
-            kwargs["patch_config"] = valid_patch_config_fixt.value
+        if patch_config_fixt.type != InputType.DEFAULT:
+            kwargs["patch_config"] = patch_config_fixt.value
         if valid_patch_info_config_fixt.type != InputType.DEFAULT:
             kwargs["patch_info_config"] = valid_patch_info_config_fixt.value
         if valid_repositories_fixt.type != InputType.DEFAULT:
@@ -145,8 +152,8 @@ class TestCRPatcherConfig:
 
         # For assertions, compare with value if not DEFAULT, otherwise use defaults
         assert config.patch_config == (
-            valid_patch_config_fixt.value
-            if valid_patch_config_fixt.type != InputType.DEFAULT
+            patch_config_fixt.value
+            if patch_config_fixt.type != InputType.DEFAULT
             else _CRPATCHER_CONFIG_DEFAULT_VALUES["patch_config"]
         )
         assert config.patch_info_config == (
@@ -163,13 +170,13 @@ class TestCRPatcherConfig:
     def test_create_from_config_file_valid(
         self,
         crpatcher_test_base_dir: Path,
-        valid_patch_config_fixt: InputData,
+        patch_config_fixt: InputData,
         valid_patch_info_config_fixt: InputData,
         valid_repositories_fixt: InputData,
     ) -> None:
         valid_config_file = _create_valid_config_file(
             crpatcher_test_base_dir,
-            valid_patch_config_fixt,
+            patch_config_fixt,
             valid_patch_info_config_fixt,
             valid_repositories_fixt,
         )
@@ -177,8 +184,8 @@ class TestCRPatcherConfig:
         config = CRPatcherConfig.create_from_config_file(valid_config_file)
 
         assert config.patch_config == (
-            valid_patch_config_fixt.value
-            if valid_patch_config_fixt.type != InputType.DEFAULT
+            patch_config_fixt.value
+            if patch_config_fixt.type != InputType.DEFAULT
             else _CRPATCHER_CONFIG_DEFAULT_VALUES["patch_config"]
         )
 
@@ -197,12 +204,12 @@ class TestCRPatcherConfig:
 
 def _create_valid_config_file(
     crpatcher_test_base_dir: Path,
-    valid_patch_config_fixt: InputData,
+    patch_config_fixt: InputData,
     valid_patch_info_config_fixt: InputData,
     valid_repositories_fixt: InputData,
 ) -> Path:
     # Construct the file name based on fixture states
-    patch_config_name = f"patch_config_{'default' if valid_patch_config_fixt.type == InputType.DEFAULT else 'custom'}"
+    patch_config_name = f"patch_config_{'default' if patch_config_fixt.type == InputType.DEFAULT else 'custom'}"
     patch_info_config_name = f"patch_info_config_{'default' if valid_patch_info_config_fixt.type == InputType.DEFAULT else 'custom'}"
     repositories_name = f"repositories_{'default' if valid_repositories_fixt.type == InputType.DEFAULT else 'custom'}"
     config_file_name = f"valid_config_{patch_config_name}_{patch_info_config_name}_{repositories_name}.yaml"
@@ -216,10 +223,8 @@ def _create_valid_config_file(
 
     data: dict[str, Any] = {}
 
-    if valid_patch_config_fixt.type != InputType.DEFAULT:
-        data["patch_config"] = cast(
-            PatchConfig, valid_patch_config_fixt.value
-        ).model_dump()
+    if patch_config_fixt.type != InputType.DEFAULT:
+        data["patch_config"] = cast(PatchConfig, patch_config_fixt.value).model_dump()
 
     if valid_patch_info_config_fixt.type != InputType.DEFAULT:
         data["patch_info_config"] = cast(
@@ -251,7 +256,7 @@ def _create_valid_config_file(
 # - default value
 
 # def test_create_from_config_file_valid(self,
-#                                        valid_patch_config_fixt: InputData,
+#                                        patch_config_fixt: InputData,
 #                                        valid_patch_info_config_fixt: InputData,
 #                                        valid_repositories_fixt: InputData,
 #                                        ) -> None:
