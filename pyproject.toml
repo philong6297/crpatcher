@@ -41,4 +41,13 @@ packages = ["crpatcher"]
 line-ending = "lf"
 
 [tool.pytest.ini_options]
-addopts = ["--import-mode=importlib"]
+addopts = [
+  "--full-trace",
+  "--import-mode=importlib",
+  "--strict-config",
+  "--strict-markers",
+]
+testpaths = ["tests"]
+tmp_path_retention_policy = "failed"
+verbosity_assertions = 2
+verbosity_test_cases = 2

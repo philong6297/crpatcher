@@ -7,7 +7,7 @@
 
 import itertools
 from pathlib import Path
-from typing import Any, Dict, NamedTuple, Optional, cast
+from typing import Any, NamedTuple, Optional, cast
 
 import pytest
 
@@ -19,11 +19,13 @@ from crpatcher.config import (
 )
 from tests.base.input_data import InputData, InputType
 
-CRPATCHER_CONFIG_DEFAULT_VALUES: Dict[str, Any] = {
-    "patch_config": PatchConfig(),
-    "patch_info_config": PatchInfoConfig(),
-    "repositories": [],
-}
+
+def CRPATCHER_CONFIG_DEFAULT() -> dict[str, Any]:
+    return {
+        "patch_config": PatchConfig(),
+        "patch_info_config": PatchInfoConfig(),
+        "repositories": [],
+    }
 
 
 class PatchConfigTestData(NamedTuple):
@@ -110,14 +112,36 @@ class RepositoryTestData(NamedTuple):
 
 
 def _generate_fixt_params_and_ids(fixture_name: str) -> dict[str, Any]:
-    params, ids = zip(*[(type, f"{fixture_name}_{type}") for type in InputType])
+    params, ids = zip(*[(type, f"{fixture_name}_{type.name}") for type in InputType])
     return {
         "params": list(params),
         "ids": list(ids),
     }
 
 
-def _build_repository_input_datas(
+def _make_folder_input_data(
+    base_dir: Path,
+    existing_empty_dir: Path,
+    non_existent_dir: Path,
+    use_valid_path: bool,
+    use_absolute_path: bool,
+) -> InputData[PathTestData]:
+    path_value = existing_empty_dir if use_valid_path else non_existent_dir
+
+    return InputData(
+        value=PathTestData(
+            path=(
+                path_value if use_absolute_path else path_value.relative_to(base_dir)
+            ),
+            base_dir=base_dir,
+            use_absolute_path=use_absolute_path,
+        ),
+        type=InputType.CUSTOM if use_valid_path else InputType.INVALID,
+    )
+
+
+@pytest.fixture(scope="class")
+def repository_input_datas_fixt(
     crpatcher_existing_empty_file: Path,
     crpatcher_test_base_dir: Path,
     crpatcher_existing_empty_dir: Path,
@@ -142,37 +166,29 @@ def _build_repository_input_datas(
         ],
     )
 
-    def _make_folder_input_data(
-        use_valid_path: bool, use_absolute_path: bool
-    ) -> InputData[PathTestData]:
-        path_value = (
-            crpatcher_existing_empty_dir
-            if use_valid_path
-            else crpatcher_non_existent_dir
-        )
-
-        return InputData(
-            value=PathTestData(
-                path=(
-                    path_value
-                    if use_absolute_path
-                    else path_value.relative_to(crpatcher_test_base_dir)
-                ),
-                base_dir=crpatcher_test_base_dir,
-                use_absolute_path=use_absolute_path,
-            ),
-            type=InputType.CUSTOM if use_valid_path else InputType.INVALID,
-        )
-
     repo_dir_datas = [
-        _make_folder_input_data(use_valid_path, use_absolute_path)
+        _make_folder_input_data(
+            base_dir=crpatcher_test_base_dir,
+            existing_empty_dir=crpatcher_existing_empty_dir,
+            non_existent_dir=crpatcher_non_existent_dir,
+            use_valid_path=use_valid_path,
+            use_absolute_path=use_absolute_path,
+        )
         for use_valid_path, use_absolute_path in PATH_CONDITIONS
     ]
 
-    patch_dir_datas = [
-        _make_folder_input_data(use_valid_path, use_absolute_path)
-        for use_valid_path, use_absolute_path in PATH_CONDITIONS
-    ]
+    # TODO(longlp): Why not work
+    # patch_dir_datas = [
+    #     _make_folder_input_data(
+    #         base_dir=crpatcher_test_base_dir,
+    #         existing_empty_dir=crpatcher_existing_empty_dir,
+    #         non_existent_dir=crpatcher_non_existent_dir,
+    #         use_valid_path=use_valid_path,
+    #         use_absolute_path=use_absolute_path,
+    #     )
+    #     for use_valid_path, use_absolute_path in PATH_CONDITIONS
+    # ]
+    patch_dir_datas = repo_dir_datas.copy()
 
     return [
         RepositoryTestData(
@@ -192,25 +208,15 @@ def _build_repository_input_datas(
 )
 def repositories_fixt(
     request: pytest.FixtureRequest,
-    crpatcher_existing_empty_file: Path,
-    crpatcher_test_base_dir: Path,
-    crpatcher_existing_empty_dir: Path,
-    crpatcher_non_existent_dir: Path,
+    repository_input_datas_fixt: list[RepositoryTestData],
 ) -> InputData[list[RepositoryTestData]]:
     if request.param == InputType.DEFAULT:
         return InputData()
 
-    repository_input_datas = _build_repository_input_datas(
-        crpatcher_existing_empty_file,
-        crpatcher_test_base_dir,
-        crpatcher_existing_empty_dir,
-        crpatcher_non_existent_dir,
-    )
-
     valid_repositories: list[RepositoryTestData] = []
     invalid_repositories: list[RepositoryTestData] = []
 
-    for data in repository_input_datas:
+    for data in repository_input_datas_fixt:
         if data.is_valid:
             valid_repositories.append(data)
         else:
