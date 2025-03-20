@@ -1,44 +1,14 @@
-from __future__ import (
-    annotations,
-)  # without this, there will be error in static type-checking
+from typing import TypeAlias, TypeVar, Union, get_args
 
-from pydantic import BaseModel, Field, validate_call
+T = TypeVar("T")
 
+# Automatically exclude None from the type
+NonNullable: TypeAlias = lambda T: Union[
+    tuple(t for t in get_args(T) if t is not type(None))
+]
 
-class ClassA(BaseModel):
+# Example Usage
+TypeA = Union[str, None]
+RefinedA = NonNullable(TypeA)  # Should resolve to `str`
 
-    field_a: int = Field(default=2)
-
-    # EXPLICIT RETURN ClassA will leads to error at runtime
-    @classmethod
-    @validate_call
-    def does_not_work_1(
-        cls,
-        field_a: int,
-    ) -> ClassA:
-        return cls(field_a=field_a)
-
-    # EXPLICIT RETURN ClassA will leads to error at runtime
-    @staticmethod
-    @validate_call
-    def does_not_work_2(
-        field_a: int,
-    ) -> ClassA:
-        return ClassA(field_a=field_a)
-
-    # NO ERROR
-    @classmethod
-    @validate_call
-    def work_1(
-        cls,
-        field_a: int,
-    ):
-        return cls(field_a=field_a)
-
-    # NO ERROR
-    @staticmethod
-    @validate_call
-    def work_2(
-        field_a: int,
-    ):
-        return ClassA(field_a=field_a)
+print(RefinedA)  # ✅ Output: <class 'str'>

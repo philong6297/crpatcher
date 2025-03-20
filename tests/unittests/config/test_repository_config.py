@@ -107,13 +107,13 @@ class TestRepositoryConfig:
         # Test repository config construction behavior.
         # When using absolute paths (needs_context=False), direct constructor should work. Otherwise, it should raise ValidationError.
 
-        needs_context = not (
+        needs_program_context = not (
             repo_dir_fixture.use_absolute_path and patch_dir_fixture.use_absolute_path
         )
 
         should_raise_error = any(
             [
-                needs_context,  # Direct constructor should fail with relative paths
+                needs_program_context,  # Direct constructor should fail with relative paths
                 (not repo_dir_fixture.use_valid_path),
                 (not patch_dir_fixture.use_valid_path),
             ]

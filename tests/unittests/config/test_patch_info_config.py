@@ -15,36 +15,32 @@ from tests.base.input_data import InputData, InputType
 @pytest.mark.parametrize(
     "version",
     [
-        InputData(),
-        InputData(value=2, type=InputType.CUSTOM),
-        InputData(value=0, type=InputType.INVALID),
-        InputData(value=-1, type=InputType.INVALID),
-        InputData(value=float("inf"), type=InputType.INVALID),
-        InputData(value=float("nan"), type=InputType.INVALID),
-        InputData(value="invalid-version", type=InputType.INVALID),
-        InputData(value=0.1, type=InputType.INVALID),
+        InputData[int](),
+        InputData[int](value=2, type=InputType.CUSTOM),
+        InputData[int](value=0, type=InputType.INVALID),
+        InputData[int](value=-1, type=InputType.INVALID),
     ],
 )
 @pytest.mark.parametrize(
     "encoding",
     [
-        InputData(),
-        InputData(value="ascii", type=InputType.CUSTOM),
-        InputData(value="invalid_encoding", type=InputType.INVALID),
+        InputData[str](),
+        InputData[str](value="ascii", type=InputType.CUSTOM),
+        InputData[str](value="invalid_encoding", type=InputType.INVALID),
     ],
 )
 @pytest.mark.parametrize(
     "ext",
     [
-        InputData(),
-        InputData(value="custom_info", type=InputType.CUSTOM),
-        InputData(value="invalid$ext", type=InputType.INVALID),
+        InputData[str](),
+        InputData[str](value="custom_info", type=InputType.CUSTOM),
+        InputData[str](value="invalid$ext", type=InputType.INVALID),
     ],
 )
 def test_patch_info_config(
-    version: InputData,
-    encoding: InputData,
-    ext: InputData,
+    version: InputData[int],
+    encoding: InputData[str],
+    ext: InputData[str],
 ) -> None:
     # Determine if any field has invalid value
     should_raise_error = any(

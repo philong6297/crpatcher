@@ -7,21 +7,21 @@ from pathlib import Path
 from pytest import TempPathFactory, fixture
 
 
-@fixture(scope="class")
+@fixture(scope="session")
 def crpatcher_test_base_dir(tmp_path_factory: TempPathFactory) -> Path:
     dir = tmp_path_factory.getbasetemp().joinpath("crpatcher_test_base_dir").absolute()
     dir.mkdir(parents=True, exist_ok=True)
     return dir
 
 
-@fixture(scope="class")
+@fixture(scope="session")
 def crpatcher_existing_empty_dir(crpatcher_test_base_dir: Path) -> Path:
     dir = crpatcher_test_base_dir.joinpath("existing_dir").absolute()
     dir.mkdir(parents=True, exist_ok=True)
     return dir
 
 
-@fixture(scope="class")
+@fixture(scope="session")
 def crpatcher_non_existent_dir(crpatcher_test_base_dir: Path) -> Path:
     dir = crpatcher_test_base_dir.joinpath("non_existent_dir").absolute()
     if dir.exists():
@@ -29,7 +29,7 @@ def crpatcher_non_existent_dir(crpatcher_test_base_dir: Path) -> Path:
     return dir
 
 
-@fixture(scope="class")
+@fixture(scope="session")
 def crpatcher_existing_empty_file(crpatcher_test_base_dir: Path) -> Path:
     file = crpatcher_test_base_dir.joinpath("temp_file.txt").absolute()
     if not file.exists():
@@ -39,7 +39,7 @@ def crpatcher_existing_empty_file(crpatcher_test_base_dir: Path) -> Path:
     return file
 
 
-@fixture(scope="class")
+@fixture(scope="session")
 def crpatcher_non_existent_file(crpatcher_test_base_dir: Path) -> Path:
     file = crpatcher_test_base_dir.joinpath("non_existent_file.txt").absolute()
     if file.is_file():

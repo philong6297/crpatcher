@@ -15,31 +15,31 @@ from tests.base.input_data import InputData, InputType
 @pytest.mark.parametrize(
     "ext",
     [
-        InputData(),
-        InputData(value="custom_patch", type=InputType.CUSTOM),
-        InputData(value="invalid-ext", type=InputType.INVALID),
+        InputData[str](),
+        InputData[str](value="custom_patch", type=InputType.CUSTOM),
+        InputData[str](value="invalid-ext", type=InputType.INVALID),
     ],
 )
 @pytest.mark.parametrize(
     "encoding",
     [
-        InputData(),
-        InputData(value="ascii", type=InputType.CUSTOM),
-        InputData(value="invalid_encoding", type=InputType.INVALID),
+        InputData[str](),
+        InputData[str](value="ascii", type=InputType.CUSTOM),
+        InputData[str](value="invalid_encoding", type=InputType.INVALID),
     ],
 )
 @pytest.mark.parametrize(
     "replacement_separator",
     [
-        InputData(),
-        InputData(value="under-score", type=InputType.CUSTOM),
-        InputData(value="invalid+sep", type=InputType.INVALID),
+        InputData[str](),
+        InputData[str](value="under-score", type=InputType.CUSTOM),
+        InputData[str](value="invalid+sep", type=InputType.INVALID),
     ],
 )
 def test_patch_config(
-    ext: InputData,
-    encoding: InputData,
-    replacement_separator: InputData,
+    ext: InputData[str],
+    encoding: InputData[str],
+    replacement_separator: InputData[str],
 ) -> None:
     # Determine if any field has invalid value
     should_raise_error = any(
