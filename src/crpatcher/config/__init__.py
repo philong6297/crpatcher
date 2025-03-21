@@ -3,15 +3,15 @@
 # found in the LICENSE file.
 
 from crpatcher.config.crpatcher_config import CRPatcherConfig
-from crpatcher.config.patch_config import PatchConfig
-from crpatcher.config.patch_info_config import PatchInfoConfig
-from crpatcher.config.program_validation_context import ProgramValidationContext
-from crpatcher.config.repository_config import RepositoryConfig
+from crpatcher.config.patch_file_option import PatchFileOption
+from crpatcher.config.patch_request import PatchRequest
+from crpatcher.config.patchinfo_file_option import PatchInfoOption
+from crpatcher.config.program_context import ProgramContext
 
 __all__ = [
     "CRPatcherConfig",
-    "PatchInfoConfig",
-    "PatchConfig",
-    "RepositoryConfig",
-    "ProgramValidationContext",
+    "PatchInfoOption",
+    "PatchFileOption",
+    "PatchRequest",
+    "ProgramContext",
 ]

@@ -1,6 +1,6 @@
 {
   "$defs": {
-    "PatchConfig": {
+    "PatchFileOption": {
       "additionalProperties": false,
       "properties": {
         "ext": {
@@ -21,10 +21,10 @@
           "type": "string"
         }
       },
-      "title": "PatchConfig",
+      "title": "PatchFileOption",
       "type": "object"
     },
-    "PatchInfoConfig": {
+    "PatchInfoOption": {
       "additionalProperties": false,
       "properties": {
         "version": {
@@ -45,10 +45,10 @@
           "type": "string"
         }
       },
-      "title": "PatchInfoConfig",
+      "title": "PatchInfoOption",
       "type": "object"
     },
-    "RepositoryConfig": {
+    "PatchRequest": {
       "additionalProperties": false,
       "properties": {
         "repo_dir": {
@@ -66,26 +66,26 @@
         "repo_dir",
         "patch_dir"
       ],
-      "title": "RepositoryConfig",
+      "title": "PatchRequest",
       "type": "object"
     }
   },
   "additionalProperties": false,
   "properties": {
-    "repositories": {
+    "requests": {
       "items": {
-        "$ref": "#/$defs/RepositoryConfig"
+        "$ref": "#/$defs/PatchRequest"
       },
       "title": "Repositories",
       "type": "array",
       "default": []
     },
-    "patch_info_config": {
-      "$ref": "#/$defs/PatchInfoConfig",
+    "patchinfo_file_opt": {
+      "$ref": "#/$defs/PatchInfoOption",
       "default": {}
     },
-    "patch_config": {
-      "$ref": "#/$defs/PatchConfig",
+    "patch_file_opt": {
+      "$ref": "#/$defs/PatchFileOption",
       "default": {}
     }
   },

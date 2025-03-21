@@ -2,46 +2,22 @@
 # Use of this source code is governed by a MIT license that can be
 # found in the LICENSE file.
 
-from pathlib import Path
 
-from pytest import TempPathFactory, fixture
-
-
-@fixture(scope="session")
-def crpatcher_test_base_dir(tmp_path_factory: TempPathFactory) -> Path:
-    dir = tmp_path_factory.getbasetemp().joinpath("crpatcher_test_base_dir").absolute()
-    dir.mkdir(parents=True, exist_ok=True)
-    return dir
-
-
-@fixture(scope="session")
-def crpatcher_existing_empty_dir(crpatcher_test_base_dir: Path) -> Path:
-    dir = crpatcher_test_base_dir.joinpath("existing_dir").absolute()
-    dir.mkdir(parents=True, exist_ok=True)
-    return dir
-
-
-@fixture(scope="session")
-def crpatcher_non_existent_dir(crpatcher_test_base_dir: Path) -> Path:
-    dir = crpatcher_test_base_dir.joinpath("non_existent_dir").absolute()
-    if dir.exists():
-        raise FileExistsError(f"crpatcher_non_existent_dir={dir} already exists")
-    return dir
-
-
-@fixture(scope="session")
-def crpatcher_existing_empty_file(crpatcher_test_base_dir: Path) -> Path:
-    file = crpatcher_test_base_dir.joinpath("temp_file.txt").absolute()
-    if not file.exists():
-        file.touch()
-    if not file.is_file():
-        raise FileNotFoundError(f"crpatcher_existing_empty_file={file} is not a file")
-    return file
-
-
-@fixture(scope="session")
-def crpatcher_non_existent_file(crpatcher_test_base_dir: Path) -> Path:
-    file = crpatcher_test_base_dir.joinpath("non_existent_file.txt").absolute()
-    if file.is_file():
-        raise FileExistsError(f"crpatcher_non_existent_file={file} already exists")
-    return file
+from tests.unittests.config.conftest_fixtures import (
+    crpatcher_all_request_test_inputs_fixt,  # type: ignore
+)
+from tests.unittests.config.conftest_fixtures import (
+    crpatcher_base_dir_fixt,  # type: ignore
+)
+from tests.unittests.config.conftest_fixtures import (
+    crpatcher_existing_empty_dir_fixt,  # type: ignore
+)
+from tests.unittests.config.conftest_fixtures import (
+    crpatcher_existing_empty_file_fixt,  # type: ignore
+)
+from tests.unittests.config.conftest_fixtures import (
+    crpatcher_non_existent_dir_fixt,  # type: ignore
+)
+from tests.unittests.config.conftest_fixtures import (
+    crpatcher_non_existent_file,  # type: ignore
+)

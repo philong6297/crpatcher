@@ -8,43 +8,43 @@ from typing import Any, Dict
 import pytest
 from pydantic import ValidationError
 
-from crpatcher.config import PatchInfoConfig
-from tests.base.input_data import InputData, InputType
+from crpatcher.config import PatchInfoOption
+from tests.base.input_data import Input, InputType
 
 
 @pytest.mark.parametrize(
     "version",
     [
-        InputData[int](),
-        InputData[int](value=2, type=InputType.CUSTOM),
-        InputData[int](value=0, type=InputType.INVALID),
-        InputData[int](value=-1, type=InputType.INVALID),
+        Input[int](),
+        Input[int](data=2, type=InputType.CUSTOM),
+        Input[int](data=0, type=InputType.INVALID),
+        Input[int](data=-1, type=InputType.INVALID),
     ],
 )
 @pytest.mark.parametrize(
     "encoding",
     [
-        InputData[str](),
-        InputData[str](value="ascii", type=InputType.CUSTOM),
-        InputData[str](value="invalid_encoding", type=InputType.INVALID),
+        Input[str](),
+        Input[str](data="ascii", type=InputType.CUSTOM),
+        Input[str](data="invalid_encoding", type=InputType.INVALID),
     ],
 )
 @pytest.mark.parametrize(
     "ext",
     [
-        InputData[str](),
-        InputData[str](value="custom_info", type=InputType.CUSTOM),
-        InputData[str](value="invalid$ext", type=InputType.INVALID),
+        Input[str](),
+        Input[str](data="custom_info", type=InputType.CUSTOM),
+        Input[str](data="invalid$ext", type=InputType.INVALID),
     ],
 )
-def test_patch_info_config(
-    version: InputData[int],
-    encoding: InputData[str],
-    ext: InputData[str],
+def test_patchinfo_file_option(
+    version: Input[int],
+    encoding: Input[str],
+    ext: Input[str],
 ) -> None:
     # Determine if any field has invalid value
     should_raise_error = any(
-        input_data.should_raise_error for input_data in [version, encoding, ext]
+        input_data.is_invalid_data for input_data in [version, encoding, ext]
     )
 
     context = pytest.raises(ValidationError) if should_raise_error else nullcontext()
@@ -52,11 +52,11 @@ def test_patch_info_config(
     # Build kwargs dict only including non-DEFAULT fields
     kwargs: Dict[str, Any] = {}
     if version.type != InputType.DEFAULT:
-        kwargs["version"] = version.value
+        kwargs["version"] = version.safe_data
     if encoding.type != InputType.DEFAULT:
-        kwargs["encoding"] = encoding.value
+        kwargs["encoding"] = encoding.safe_data
     if ext.type != InputType.DEFAULT:
-        kwargs["ext"] = ext.value
+        kwargs["ext"] = ext.safe_data
 
     DEFAULT_VALUES = {
         "version": 1,
@@ -65,22 +65,24 @@ def test_patch_info_config(
     }
 
     with context:
-        config = PatchInfoConfig(**kwargs)
+        config = PatchInfoOption(**kwargs)
 
         if not should_raise_error:
-            # For assertions, compare with value if not DEFAULT, otherwise use PatchInfoConfig's defaults
+            # For assertions, compare with value if not DEFAULT, otherwise use PatchInfoOption's defaults
             expected_version = (
-                version.value
+                version.safe_data
                 if version.type != InputType.DEFAULT
                 else DEFAULT_VALUES["version"]
             )
             expected_encoding = (
-                encoding.value
+                encoding.safe_data
                 if encoding.type != InputType.DEFAULT
                 else DEFAULT_VALUES["encoding"]
             )
             expected_ext = (
-                ext.value if ext.type != InputType.DEFAULT else DEFAULT_VALUES["ext"]
+                ext.safe_data
+                if ext.type != InputType.DEFAULT
+                else DEFAULT_VALUES["ext"]
             )
 
             assert config.version == expected_version

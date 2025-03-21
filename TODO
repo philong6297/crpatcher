@@ -2,3 +2,5 @@
 - packaging? releasing?
 - CI/CD
 - tox and pyscaffold
+- https://pytest-cov.readthedocs.io/en/latest/config.html
+- https://pypi.org/project/pytest-randomly/

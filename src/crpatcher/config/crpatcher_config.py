@@ -6,12 +6,12 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field, FilePath, validate_call
+from pydantic import BaseModel, ConfigDict, Field, FilePath, validate_call
 
-from crpatcher.config.patch_config import PatchConfig
-from crpatcher.config.patch_info_config import PatchInfoConfig
-from crpatcher.config.program_validation_context import ProgramValidationContext
-from crpatcher.config.repository_config import RepositoryConfig
+from crpatcher.config.patch_file_option import PatchFileOption
+from crpatcher.config.patch_request import PatchRequest
+from crpatcher.config.patchinfo_file_option import PatchInfoOption
+from crpatcher.config.program_context import ProgramContext
 from crpatcher.config.util import CRPATCHER_STRICT_CONFIG
 
 __all__ = [
@@ -20,30 +20,27 @@ __all__ = [
 
 
 class CRPatcherConfig(BaseModel):
-    model_config = CRPATCHER_STRICT_CONFIG
+    model_config = CRPATCHER_STRICT_CONFIG()
 
-    repositories: list[RepositoryConfig] = Field(
+    requests: list[PatchRequest] = Field(
         default_factory=list,
     )
-    patch_info_config: PatchInfoConfig = Field(
-        default_factory=PatchInfoConfig,
+    patchinfo_file_opt: PatchInfoOption = Field(
+        default_factory=PatchInfoOption,
     )
-    patch_config: PatchConfig = Field(
-        default_factory=PatchConfig,
+    patch_file_opt: PatchFileOption = Field(
+        default_factory=PatchFileOption,
     )
 
     @staticmethod
     @validate_call(
-        config=CRPATCHER_STRICT_CONFIG,
+        config=CRPATCHER_STRICT_CONFIG(),
         validate_return=False,  # It is already validated
     )
     def create_from_config_file(
         config_file: FilePath,  # make sure the file exist
     ):  # No explicit return as per https://github.com/pydantic/pydantic/issues/11582
-        with config_file.open("r", encoding="utf-8") as f:
-            json_data = f.read()
+        json_data = config_file.read_bytes()
 
-            program_context = ProgramValidationContext(config_file=config_file)
-            return CRPatcherConfig.model_validate_json(
-                json_data, context=program_context
-            )
+        program_context = ProgramContext(config_file=config_file)
+        return CRPatcherConfig.model_validate_json(json_data, context=program_context)

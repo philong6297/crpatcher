@@ -28,7 +28,7 @@ version = "0.1.0"
 
 [project.optional-dependencies]
 dev = ["ruff>=0.10.0"]
-test = ["pytest-mock>=3.0", "pytest>=7.0", "tomlkit>=0.13"]
+test = ["pytest-cases>=3.8", "pytest>=8"]
 
 [project.urls]
 Homepage = "https://github.com/philong6297/crpatcher"
@@ -42,11 +42,14 @@ line-ending = "lf"
 
 [tool.pytest.ini_options]
 addopts = [
-  "--full-trace",
   "--import-mode=importlib",
-  "--strict-config",
-  "--strict-markers",
+  "--no-header",             # Do not print header
+  "--no-summary",            # Do not print summary
+  "--strict-config",         # Detect unused config options
+  "--strict-markers",        # Detect unused markers
+  "--verbose",
 ]
+required_plugins = ["pytest-cases>=3.8"]
 testpaths = ["tests"]
 tmp_path_retention_policy = "failed"
 verbosity_assertions = 2

@@ -10,31 +10,31 @@ from typing import Any, Optional, final
 
 from pydantic import BaseModel, Field, ValidationInfo, field_serializer, field_validator
 
-from crpatcher.config.program_validation_context import ProgramValidationContext
+from crpatcher.config.program_context import ProgramContext
 from crpatcher.config.util import CRPATCHER_STRICT_CONFIG
 
-__all__ = ["RepositoryConfig"]
+__all__ = ["PatchRequest"]
 
 
 @final
-class RepositoryConfig(BaseModel):
-    model_config = CRPATCHER_STRICT_CONFIG
+class PatchRequest(BaseModel):
+    model_config = CRPATCHER_STRICT_CONFIG()
     repo_dir: Path = Field()
     patch_dir: Path = Field()
 
     @staticmethod
     def create_with_context(
-        program_context: Optional[ProgramValidationContext], **kwargs: Any
-    ) -> RepositoryConfig:
-        return RepositoryConfig.model_validate(kwargs, context=program_context)
+        program_context: Optional[ProgramContext], **kwargs: Any
+    ) -> PatchRequest:
+        return PatchRequest.model_validate(kwargs, context=program_context)
 
     @field_validator("repo_dir", "patch_dir", mode="after")
     @classmethod
     def _resolve_directory(cls, dir: Path, info: ValidationInfo) -> Path:
-        # if there is a valid ProgramValidationContext, base_dir is already valid. Dont need to check its existence
+        # if there is a valid ProgramContext, base_dir is already valid. Dont need to check its existence
         base_dir = (
             info.context.config_file.parent
-            if isinstance(info.context, ProgramValidationContext)
+            if isinstance(info.context, ProgramContext)
             else None
         )
 

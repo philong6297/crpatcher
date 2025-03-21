@@ -7,6 +7,6 @@ from pydantic import BaseModel, Field, FilePath
 from crpatcher.config.util import CRPATCHER_STRICT_CONFIG
 
 
-class ProgramValidationContext(BaseModel):
-    model_config = CRPATCHER_STRICT_CONFIG
+class ProgramContext(BaseModel):
+    model_config = CRPATCHER_STRICT_CONFIG()
     config_file: FilePath = Field()

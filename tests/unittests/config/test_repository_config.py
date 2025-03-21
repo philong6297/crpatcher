@@ -4,194 +4,95 @@
 
 from __future__ import annotations
 
-import itertools
 from contextlib import nullcontext
-from pathlib import Path
-from typing import Callable, NamedTuple, Optional
 
 import pytest
 from pydantic import ValidationError
 
-from crpatcher.config import ProgramValidationContext, RepositoryConfig
+from crpatcher.config import PatchRequest
+from tests.unittests.config.helper import RequestTestInput
 
 
-@pytest.fixture(
-    scope="class",
-    params=[
-        True,  # build validation context from existing file
-        False,  # no validation context
-    ],
-    ids=["valid_context", "invalid_context"],
-)
-def validation_context_fixture(
-    crpatcher_existing_empty_file: Path, request: pytest.FixtureRequest
-) -> Optional[ProgramValidationContext]:
-    if request.param:
-        return ProgramValidationContext(config_file=crpatcher_existing_empty_file)
-    return None
-
-
-class PathTestData(NamedTuple):
-    path: Path
-    base_dir: Path
-    use_valid_path: bool
-    use_absolute_path: bool
-
-
-def _make_path_fixture(
-    path_name: str,
-) -> Callable[[Path, Path, Path, pytest.FixtureRequest], PathTestData]:
-    PATH_CONDITIONS = itertools.product(
-        [
-            True,  # exist path
-            False,  # non-exist path
-        ],
-        [
-            True,  # use absolute path
-            False,  # use relative path
-        ],
-    )
-
-    def id_generator(condition: tuple[bool, bool]) -> str:
-        use_valid_path, use_absolute_path = condition
-
-        return (
-            f"{path_name}_"
-            f"{'valid' if use_valid_path else 'invalid'}_"
-            f"{'absolute' if use_absolute_path else 'relative'}"
-        )
-
-    @pytest.fixture(
-        scope="class",
-        params=PATH_CONDITIONS,
-        ids=id_generator,
-    )
-    def _path_fixture(
-        crpatcher_test_base_dir: Path,
-        crpatcher_non_existent_dir: Path,
-        crpatcher_existing_empty_dir: Path,
-        request: pytest.FixtureRequest,
-    ) -> PathTestData:
-        use_valid_path, use_absolute_path = request.param
-
-        test_dir = (
-            crpatcher_existing_empty_dir
-            if use_valid_path
-            else crpatcher_non_existent_dir
-        )
-
-        return PathTestData(
-            path=(
-                test_dir
-                if use_absolute_path
-                else test_dir.relative_to(crpatcher_test_base_dir)
-            ),
-            base_dir=crpatcher_test_base_dir,
-            use_valid_path=use_valid_path,
-            use_absolute_path=use_absolute_path,
-        )
-
-    return _path_fixture
-
-
-repo_dir_fixture = _make_path_fixture("repo_dir")
-patch_dir_fixture = _make_path_fixture("patch_dir")
-
-
-class TestRepositoryConfig:
+class TestPatchRequest:
     def test_direct_construction(
         self,
-        repo_dir_fixture: PathTestData,
-        patch_dir_fixture: PathTestData,
+        crpatcher_all_request_test_inputs_fixt: list[RequestTestInput],
     ) -> None:
         # Test repository config construction behavior.
-        # When using absolute paths (needs_context=False), direct constructor should work. Otherwise, it should raise ValidationError.
+        # When using absolute paths (needs_context=False), direct constructor should work.
+        # Otherwise, it should raise ValidationError.
 
-        needs_program_context = not (
-            repo_dir_fixture.use_absolute_path and patch_dir_fixture.use_absolute_path
-        )
+        for test_case in crpatcher_all_request_test_inputs_fixt:
+            should_raise_error = not test_case.is_valid
 
-        should_raise_error = any(
-            [
-                needs_program_context,  # Direct constructor should fail with relative paths
-                (not repo_dir_fixture.use_valid_path),
-                (not patch_dir_fixture.use_valid_path),
-            ]
-        )
+            if not test_case.construction_needs_program_context:
+                with (
+                    pytest.raises(ValidationError)
+                    if should_raise_error
+                    else nullcontext()
+                ):
+                    config = PatchRequest(
+                        repo_dir=test_case.repo_dir.safe_data.path,
+                        patch_dir=test_case.patch_dir.safe_data.path,
+                    )
 
-        context = (
-            pytest.raises(ValidationError) if should_raise_error else nullcontext()
-        )
+                    if not should_raise_error:
+                        # Verify paths are absolute and exist
+                        assert config.repo_dir.is_absolute()
+                        assert config.patch_dir.is_absolute()
+                        assert config.repo_dir.is_dir()
+                        assert config.patch_dir.is_dir()
 
-        with context:
-            config = RepositoryConfig(
-                repo_dir=repo_dir_fixture.path,
-                patch_dir=patch_dir_fixture.path,
-            )
+                        # Verify paths are resolved correctly.
+                        # Since we are using direct construction, the paths must be all absolute and exactly the same as input
+                        assert config.repo_dir == test_case.repo_dir.safe_data.path
+                        assert config.patch_dir == test_case.patch_dir.safe_data.path
 
-            if not should_raise_error:
-                # Verify paths are absolute and exist
-                assert config.repo_dir.is_absolute()
-                assert config.patch_dir.is_absolute()
-                assert config.repo_dir.is_dir()
-                assert config.patch_dir.is_dir()
-
-                assert config.repo_dir == repo_dir_fixture.path
-                assert config.patch_dir == patch_dir_fixture.path
-
-    def test_class_construction_with_context(
+    def test_construction_with_program_context(
         self,
-        validation_context_fixture: Optional[ProgramValidationContext],
-        repo_dir_fixture: PathTestData,
-        patch_dir_fixture: PathTestData,
+        crpatcher_all_request_test_inputs_fixt: list[RequestTestInput],
     ) -> None:
-        # Test with RepositoryConfig.create_with_context.
+        # Test with PatchRequest.create_with_context.
         #
         # Any invalid path (use_valid_path=False) should raise ValidationError.
         # For relative paths, validation context must be present.
 
-        needs_context = not (
-            repo_dir_fixture.use_absolute_path and patch_dir_fixture.use_absolute_path
-        )
+        for test_case in crpatcher_all_request_test_inputs_fixt:
+            should_raise_error = not test_case.is_valid
 
-        should_raise_error = any(
-            [
-                (needs_context and validation_context_fixture is None),
-                (not repo_dir_fixture.use_valid_path),
-                (not patch_dir_fixture.use_valid_path),
-            ]
-        )
+            with (
+                pytest.raises(ValidationError) if should_raise_error else nullcontext()
+            ):
+                config = PatchRequest.create_with_context(
+                    program_context=test_case.program_context.safe_data,
+                    repo_dir=test_case.repo_dir.safe_data.path,
+                    patch_dir=test_case.patch_dir.safe_data.path,
+                )
 
-        context = (
-            pytest.raises(ValidationError) if should_raise_error else nullcontext()
-        )
+                if not should_raise_error:
+                    # Verify paths are absolute and exist
+                    assert config.repo_dir.is_absolute()
+                    assert config.patch_dir.is_absolute()
+                    assert config.repo_dir.is_dir()
+                    assert config.patch_dir.is_dir()
 
-        with context:
-            config = RepositoryConfig.create_with_context(
-                program_context=validation_context_fixture,
-                repo_dir=repo_dir_fixture.path,
-                patch_dir=patch_dir_fixture.path,
-            )
+                    # Verify relative paths are resolved correctly
 
-            if not should_raise_error:
-                # Verify paths are absolute and exist
-                assert config.repo_dir.is_absolute()
-                assert config.patch_dir.is_absolute()
-                assert config.repo_dir.is_dir()
-                assert config.patch_dir.is_dir()
-
-                # Verify relative paths are resolved correctly
-
-                if repo_dir_fixture.use_absolute_path:
-                    assert config.repo_dir == repo_dir_fixture.path
-                else:
-                    assert config.repo_dir == repo_dir_fixture.base_dir.joinpath(
-                        repo_dir_fixture.path
+                    expected_repo_dir = (
+                        test_case.repo_dir.safe_data.path
+                        if test_case.repo_dir.safe_data.use_absolute_path
+                        else test_case.repo_dir.safe_data.base_dir.joinpath(
+                            test_case.repo_dir.safe_data.path
+                        )
+                    )
+                    expected_patch_dir = (
+                        test_case.patch_dir.safe_data.path
+                        if test_case.patch_dir.safe_data.use_absolute_path
+                        else test_case.patch_dir.safe_data.base_dir.joinpath(
+                            test_case.patch_dir.safe_data.path
+                        )
                     )
 
-                if patch_dir_fixture.use_absolute_path:
-                    assert config.patch_dir == patch_dir_fixture.path
-                else:
-                    assert config.patch_dir == patch_dir_fixture.base_dir.joinpath(
-                        patch_dir_fixture.path
-                    )
+                    assert config.repo_dir == expected_repo_dir
+                    assert config.patch_dir == expected_patch_dir
+                    assert config.patch_dir == expected_patch_dir

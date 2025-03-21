@@ -13,8 +13,8 @@ from crpatcher.config.util import CRPATCHER_STRICT_CONFIG
 
 
 @final
-class PatchConfig(BaseModel):
-    model_config = CRPATCHER_STRICT_CONFIG
+class PatchFileOption(BaseModel):
+    model_config = CRPATCHER_STRICT_CONFIG()
     ext: str = Field(
         default="patch",
         pattern=r"^\w+$",  # matches all alphanumeric characters and _

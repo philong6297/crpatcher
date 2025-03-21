@@ -13,8 +13,8 @@ from crpatcher.config.util import CRPATCHER_STRICT_CONFIG
 
 
 @final
-class PatchInfoConfig(BaseModel):
-    model_config = CRPATCHER_STRICT_CONFIG
+class PatchInfoOption(BaseModel):
+    model_config = CRPATCHER_STRICT_CONFIG()
     version: int = Field(
         default=1,
         ge=1,
