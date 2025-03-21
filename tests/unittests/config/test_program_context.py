@@ -10,28 +10,41 @@ from pydantic import ValidationError
 
 from crpatcher.config import ProgramContext
 from tests.base.input_data import Input, InputType
+from tests.base.pytest_cases import pytest_cases_parametrize_with_cases
 
 
-def test_program_context(
-    crpatcher_existing_empty_file_fixt: Path,
-    crpatcher_existing_empty_dir_fixt: Path,
-    crpatcher_non_existent_file: Path,
-) -> None:
-    test_cases = [
-        Input(
+class ConfigFileTestCases:
+    def case_valid_use_existing_file(
+        self, crpatcher_existing_empty_file_fixt: Path
+    ) -> Input[Path]:
+        return Input(
             data=crpatcher_existing_empty_file_fixt, type=InputType.CUSTOM
-        ),  # Valid file
-        Input(
-            data=crpatcher_existing_empty_dir_fixt, type=InputType.INVALID
-        ),  # Directory instead of file
-        Input(
-            data=crpatcher_non_existent_file, type=InputType.INVALID
-        ),  # Non-existent file
-    ]
+        )  # Valid file
 
-    for case in test_cases:
-        with pytest.raises(ValidationError) if case.is_invalid_data else nullcontext():
-            context = ProgramContext(config_file=case.safe_data)
-            if not case.is_invalid_data:
-                assert context.config_file == case.safe_data
-                assert context.config_file.is_file()
+    def case_invalid_use_directory(
+        self, crpatcher_existing_empty_dir_fixt: Path
+    ) -> Input[Path]:
+        return Input(
+            data=crpatcher_existing_empty_dir_fixt, type=InputType.INVALID
+        )  # Directory instead of file
+
+    def case_invalid_use_non_existent_file(
+        self, crpatcher_non_existent_file: Path
+    ) -> Input[Path]:
+        return Input(
+            data=crpatcher_non_existent_file, type=InputType.INVALID
+        )  # Non-existent file
+
+
+@pytest_cases_parametrize_with_cases(
+    "config_file",
+    cases=ConfigFileTestCases,
+)
+def test_program_context(config_file: Input[Path]) -> None:
+    with (
+        pytest.raises(ValidationError) if config_file.is_invalid_data else nullcontext()
+    ):
+        context = ProgramContext(config_file=config_file.safe_data)
+        if not config_file.is_invalid_data:
+            assert context.config_file == config_file.safe_data
+            assert context.config_file.is_file()

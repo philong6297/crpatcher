@@ -5,69 +5,42 @@
 from __future__ import annotations
 
 from contextlib import nullcontext
-from typing import Any, Dict, cast
+from typing import Any, Dict
 
 import pytest
 from pydantic import ValidationError
-from pytest_cases import case, parametrize, parametrize_with_cases
 
 from crpatcher.config import PatchFileOption
-from tests.base.input_data import Input, InputType, NoValue
+from tests.base.input_data import Input, InputType
+from tests.base.pytest_cases import pytest_cases_parametrize
 
 
-def _idgen_for_input_str_parametrize(**args: dict[str, Any]) -> str:
-    if len(args) != 1:
-        raise ValueError(
-            "Invalid **args. "
-            "This function is only intended to use with @parametrize(`name`, list[Input[str]])."
-            f"Actual: {args}"
-        )
-
-    name, input_value = next(iter(args.items()))
-
-    if not isinstance(input_value, Input):
-        raise ValueError(
-            "Invalid value type "
-            "This function is only intended to use with @parametrize(`name`, list[Input[str]])."
-            f"Actual: {type(input_value)}"
-        )
-
-    if not isinstance(input_value.get("data"), str | NoValue):
-        raise ValueError(
-            "Invalid value type "
-            "This function is only intended to use with @parametrize(`name`, list[Input[str]])."
-            f"Actual: {input_value}"
-        )
-
-    return f"{name}={input_value.type.name.lower()}"
-
-
-@parametrize(
-    "replacement_separator",
-    (
+@pytest_cases_parametrize(
+    argnames="replacement_separator",
+    argvalues=(
         Input[str](),
         Input[str](data="under-score", type=InputType.CUSTOM),
         Input[str](data="invalid+sep", type=InputType.INVALID),
     ),
-    idgen=_idgen_for_input_str_parametrize,
+    idgen=Input.idgen_for_input_parametrize(str),
 )
-@parametrize(
-    "encoding",
-    (
+@pytest_cases_parametrize(
+    argnames="encoding",
+    argvalues=(
         Input[str](),
         Input[str](data="ascii", type=InputType.CUSTOM),
         Input[str](data="invalid_encoding", type=InputType.INVALID),
     ),
-    # idgen=_idgen_for_input_str_parametrize,
+    idgen=Input.idgen_for_input_parametrize(str),
 )
-@parametrize(
-    "ext",
-    (
+@pytest_cases_parametrize(
+    argnames="ext",
+    argvalues=(
         Input[str](),
         Input[str](data="custom_patch", type=InputType.CUSTOM),
         Input[str](data="invalid-ext", type=InputType.INVALID),
     ),
-    # idgen=_idgen_for_input_str_parametrize,
+    idgen=Input.idgen_for_input_parametrize(str),
 )
 def test_patch_file_option(
     ext: Input[str],

@@ -10,9 +10,10 @@ from pydantic import ValidationError
 
 from crpatcher.config import PatchInfoOption
 from tests.base.input_data import Input, InputType
+from tests.base.pytest_cases import pytest_cases_parametrize
 
 
-@pytest.mark.parametrize(
+@pytest_cases_parametrize(
     "version",
     [
         Input[int](),
@@ -20,22 +21,25 @@ from tests.base.input_data import Input, InputType
         Input[int](data=0, type=InputType.INVALID),
         Input[int](data=-1, type=InputType.INVALID),
     ],
+    idgen=Input.idgen_for_input_parametrize(int),
 )
-@pytest.mark.parametrize(
+@pytest_cases_parametrize(
     "encoding",
     [
         Input[str](),
         Input[str](data="ascii", type=InputType.CUSTOM),
         Input[str](data="invalid_encoding", type=InputType.INVALID),
     ],
+    idgen=Input.idgen_for_input_parametrize(str),
 )
-@pytest.mark.parametrize(
+@pytest_cases_parametrize(
     "ext",
     [
         Input[str](),
         Input[str](data="custom_info", type=InputType.CUSTOM),
         Input[str](data="invalid$ext", type=InputType.INVALID),
     ],
+    idgen=Input.idgen_for_input_parametrize(str),
 )
 def test_patchinfo_file_option(
     version: Input[int],

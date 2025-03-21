@@ -1,11 +1,7 @@
-# Copyright 2025 Phi-Long Le. All rights reserved.
-# Use of this source code is governed by a MIT license that can be
-# found in the LICENSE file.
-
 from enum import Enum
-from typing import Any, Generic, Self, TypeVar, Union, get_args
+from typing import Any, Callable, Generic, Self, Type, TypeVar, Union, cast
 
-from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class InputType(Enum):
@@ -37,22 +33,37 @@ class Input(BaseModel, Generic[T]):
         strict=True,
     )
 
-    _data_type: type = PrivateAttr(None)
+    @staticmethod
+    def idgen_for_input_parametrize(expected_type: Type[Any]) -> Callable[..., str]:
+        def _implement(**kwargs: dict[str, Any]) -> str:
+            if len(kwargs) != 1:
+                raise ValueError(
+                    "Invalid **kwargs. "
+                    "This function is only intended to use with @parametrize(`name`, list[Input[str]])."
+                    f"Actual: {kwargs}"
+                )
 
-    def model_post_init(self, __context: Any) -> None:
-        # Extract the type argument T at runtime from __orig_class__
-        # return Input[T]
-        orig_class = getattr(self, "__orig_class__", None)
-        if orig_class:
-            # return [T, ...]
-            args = get_args(orig_class)
-            # Since there is only one type argument, first one must be T
-            if args:
-                self._data_type = args[0]
+            name, input = next(iter(kwargs.items()))
 
-    @property
-    def data_type(self):
-        return self._data_type
+            if not isinstance(input, Input):
+                raise ValueError(
+                    "Invalid value type."
+                    f"This function is only intended to use with @parametrize(`name`, list[Input[{expected_type.__name__}]])."
+                    f"Actual: {type(input)}"
+                )
+
+            casted_data = cast(Any, input.data)  # type: ignore
+
+            if not isinstance(casted_data, (expected_type, NoValue)):
+                raise ValueError(
+                    "Invalid data type."
+                    f"This function is only intended to use with @parametrize(`name`, list[Input[{expected_type.__name__}]])."
+                    f"Actual: {type(casted_data).__name__}"
+                )
+
+            return f"({name}={input.type.name})"
+
+        return _implement
 
     @property
     def is_invalid_data(self) -> bool:

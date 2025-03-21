@@ -4,3 +4,4 @@
 - tox and pyscaffold
 - https://pytest-cov.readthedocs.io/en/latest/config.html
 - https://pypi.org/project/pytest-randomly/
+- pytest_cases is not friendly with static type checking

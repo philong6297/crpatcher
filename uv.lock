@@ -29,11 +29,12 @@ dependencies = [
     { name = "pydantic-settings" },
 ]
 
-[package.optional-dependencies]
+[package.dev-dependencies]
 dev = [
     { name = "ruff" },
 ]
 test = [
+    { name = "decopatch" },
     { name = "pytest" },
     { name = "pytest-cases" },
 ]
@@ -42,11 +43,15 @@ test = [
 requires-dist = [
     { name = "pydantic" },
     { name = "pydantic-settings" },
-    { name = "pytest", marker = "extra == 'test'", specifier = ">=8" },
-    { name = "pytest-cases", marker = "extra == 'test'", specifier = ">=3.8" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.10.0" },
 ]
-provides-extras = ["dev", "test"]
+
+[package.metadata.requires-dev]
+dev = [{ name = "ruff", specifier = ">=0.10.0" }]
+test = [
+    { name = "decopatch", specifier = ">=1.4" },
+    { name = "pytest", specifier = ">=8" },
+    { name = "pytest-cases", specifier = ">=3.8" },
+]
 
 [[package]]
 name = "decopatch"

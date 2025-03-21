@@ -26,12 +26,15 @@ readme = "README.md"
 requires-python = ">=3.11"
 version = "0.1.0"
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = ["ruff>=0.10.0"]
-test = ["pytest-cases>=3.8", "pytest>=8"]
+test = ["pytest-cases>=3.8", "pytest>=8", "decopatch>=1.4"]
 
 [project.urls]
 Homepage = "https://github.com/philong6297/crpatcher"
+
+[tool.uv]
+default-groups = ["dev", "test"]
 
 [tool.setuptools]
 package-dir = { "" = "src" }
@@ -41,14 +44,7 @@ packages = ["crpatcher"]
 line-ending = "lf"
 
 [tool.pytest.ini_options]
-addopts = [
-  "--import-mode=importlib",
-  "--no-header",             # Do not print header
-  "--no-summary",            # Do not print summary
-  "--strict-config",         # Detect unused config options
-  "--strict-markers",        # Detect unused markers
-  "--verbose",
-]
+addopts = ["--import-mode=importlib"]
 required_plugins = ["pytest-cases>=3.8"]
 testpaths = ["tests"]
 tmp_path_retention_policy = "failed"
