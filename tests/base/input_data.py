@@ -3,9 +3,9 @@
 # found in the LICENSE file.
 
 from enum import Enum
-from typing import Generic, Self, TypeVar, Union
+from typing import Any, Generic, Self, TypeVar, Union, get_args
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, model_validator
 
 
 class InputType(Enum):
@@ -36,6 +36,23 @@ class Input(BaseModel, Generic[T]):
         validate_assignment=True,
         strict=True,
     )
+
+    _data_type: type = PrivateAttr(None)
+
+    def model_post_init(self, __context: Any) -> None:
+        # Extract the type argument T at runtime from __orig_class__
+        # return Input[T]
+        orig_class = getattr(self, "__orig_class__", None)
+        if orig_class:
+            # return [T, ...]
+            args = get_args(orig_class)
+            # Since there is only one type argument, first one must be T
+            if args:
+                self._data_type = args[0]
+
+    @property
+    def data_type(self):
+        return self._data_type
 
     @property
     def is_invalid_data(self) -> bool:

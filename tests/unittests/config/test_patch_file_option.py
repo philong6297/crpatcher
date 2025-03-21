@@ -5,72 +5,51 @@
 from __future__ import annotations
 
 from contextlib import nullcontext
-from typing import Any, Dict
+from typing import Any, Dict, cast
 
 import pytest
 from pydantic import ValidationError
-from pytest_cases import case, parametrize
+from pytest_cases import case, parametrize, parametrize_with_cases
 
 from crpatcher.config import PatchFileOption
-from tests.base.input_data import Input, InputType
+from tests.base.input_data import Input, InputType, NoValue
 
 
-class InputCases:
-    @parametrize(
-        "ext",
-        (
-            Input[str](),
-            Input[str](data="custom_patch", type=InputType.CUSTOM),
-            Input[str](data="invalid-ext", type=InputType.INVALID),
-        ),
-        idgen=lambda **args: ",".join(
-            f"{name}={input_value.type.name}" for name, input_value in args.items()
-        ),
-    )
-    def case_ext(self, ext: Input[str]) -> Input[str]:
-        return ext
+def _idgen_for_input_str_parametrize(**args: dict[str, Any]) -> str:
+    if len(args) != 1:
+        raise ValueError(
+            "Invalid **args. "
+            "This function is only intended to use with @parametrize(`name`, list[Input[str]])."
+            f"Actual: {args}"
+        )
 
-    @parametrize(
-        "encoding",
-        (
-            Input[str](),
-            Input[str](data="ascii", type=InputType.CUSTOM),
-            Input[str](data="invalid_encoding", type=InputType.INVALID),
-        ),
-        idgen=lambda **args: ",".join(
-            f"{name}={input_value.type.name}" for name, input_value in args.items()
-        ),
-    )
-    def case_encoding(self, encoding: Input[str]) -> Input[str]:
-        return encoding
+    name, input_value = next(iter(args.items()))
 
-    @parametrize(
-        "replacement_separator",
-        (
-            Input[str](),
-            Input[str](data="under-score", type=InputType.CUSTOM),
-            Input[str](data="invalid+sep", type=InputType.INVALID),
-        ),
-        idgen=lambda **args: ",".join(
-            f"{name}={input_value.type.name}" for name, input_value in args.items()
-        ),
-    )
-    def case_replacement_separator(
-        self, replacement_separator: Input[str]
-    ) -> Input[str]:
-        return replacement_separator
+    if not isinstance(input_value, Input):
+        raise ValueError(
+            "Invalid value type "
+            "This function is only intended to use with @parametrize(`name`, list[Input[str]])."
+            f"Actual: {type(input_value)}"
+        )
+
+    if not isinstance(input_value.get("data"), str | NoValue):
+        raise ValueError(
+            "Invalid value type "
+            "This function is only intended to use with @parametrize(`name`, list[Input[str]])."
+            f"Actual: {input_value}"
+        )
+
+    return f"{name}={input_value.type.name.lower()}"
 
 
 @parametrize(
-    "ext",
+    "replacement_separator",
     (
         Input[str](),
-        Input[str](data="custom_patch", type=InputType.CUSTOM),
-        Input[str](data="invalid-ext", type=InputType.INVALID),
+        Input[str](data="under-score", type=InputType.CUSTOM),
+        Input[str](data="invalid+sep", type=InputType.INVALID),
     ),
-    idgen=lambda **args: ",".join(
-        f"{name}={input_value.type.name}" for name, input_value in args.items()
-    ),
+    idgen=_idgen_for_input_str_parametrize,
 )
 @parametrize(
     "encoding",
@@ -79,20 +58,16 @@ class InputCases:
         Input[str](data="ascii", type=InputType.CUSTOM),
         Input[str](data="invalid_encoding", type=InputType.INVALID),
     ),
-    idgen=lambda **args: ",".join(
-        f"{name}={input_value.type.name}" for name, input_value in args.items()
-    ),
+    # idgen=_idgen_for_input_str_parametrize,
 )
 @parametrize(
-    "replacement_separator",
+    "ext",
     (
         Input[str](),
-        Input[str](data="under-score", type=InputType.CUSTOM),
-        Input[str](data="invalid+sep", type=InputType.INVALID),
+        Input[str](data="custom_patch", type=InputType.CUSTOM),
+        Input[str](data="invalid-ext", type=InputType.INVALID),
     ),
-    idgen=lambda **args: ",".join(
-        f"{name}={input_value.type.name}" for name, input_value in args.items()
-    ),
+    # idgen=_idgen_for_input_str_parametrize,
 )
 def test_patch_file_option(
     ext: Input[str],
