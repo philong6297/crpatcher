@@ -7,9 +7,11 @@
 from typing import Any, Callable
 
 from decopatch import DECORATED as _LIB_DECORATED
-from decopatch import function_decorator as _function_decorator
+from decopatch import function_decorator as _lib_function_decorator
 from pytest_cases import AUTO as _LIB_AUTO
+from pytest_cases import case as _lib_case
 from pytest_cases import fixture as _lib_fixture
+from pytest_cases import fixture_ref as pytest_cases_fixture_ref
 from pytest_cases import parametrize as _lib_parametrize
 from pytest_cases import parametrize_with_cases as _lib_parametrize_with_cases
 
@@ -17,6 +19,8 @@ __all__ = [
     "pytest_cases_parametrize",
     "pytest_cases_fixture",
     "pytest_cases_parametrize_with_cases",
+    "pytest_cases_case",
+    "pytest_cases_fixture_ref",
 ]
 
 
@@ -36,13 +40,16 @@ def pytest_cases_parametrize(
     debug: Any = False,
     **args: Any,
 ) -> Callable[[Any], Any]:
+    named_args: dict[str, Any] = {}
+    if idgen is not _IDGEN:
+        named_args["idgen"] = idgen
     return _lib_parametrize(
         argnames=argnames,
         argvalues=argvalues,
         indirect=indirect,
         ids=ids,
         idstyle=idstyle,
-        idgen=idgen,
+        **named_args,
         auto_refs=auto_refs,
         scope=scope,
         hook=hook,
@@ -51,7 +58,7 @@ def pytest_cases_parametrize(
     )
 
 
-@_function_decorator
+@_lib_function_decorator
 def pytest_cases_fixture(
     scope: Any = "function",
     autouse: Any = False,
@@ -100,4 +107,19 @@ def pytest_cases_parametrize_with_cases(
         debug=debug,
         scope=scope,
         import_fixtures=import_fixtures,
+    )
+
+
+@_lib_function_decorator
+def pytest_cases_case(
+    id: Any = None,
+    tags: Any = None,
+    marks: Any = (),
+    case_func: Any = _LIB_DECORATED,
+) -> Any:
+    return _lib_case(
+        id=id,
+        tags=tags,
+        marks=marks,
+        case_func=case_func,
     )

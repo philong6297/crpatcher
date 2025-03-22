@@ -14,6 +14,7 @@ from pydantic import ValidationError
 
 from crpatcher.config import CRPatcherConfig, PatchFileOption, PatchInfoOption
 from tests.base.input_data import Input, InputType
+from tests.base.pytest_cases import pytest_cases_fixture_ref, pytest_cases_parametrize
 from tests.unittests.config._test_crpatcher_config_fixtures import *
 from tests.unittests.config.helper import (
     PatchFileOptionTestInput,
@@ -129,6 +130,20 @@ class TestCRPatcherConfig:
                 )
                 assert config.requests == expected_config["requests"]
 
+    @pytest_cases_parametrize(
+        "config_file",
+        [
+            pytest_cases_fixture_ref("crpatcher_non_existent_file"),  # not exist
+            pytest_cases_fixture_ref("crpatcher_existing_empty_dir_fixt"),  # not a file
+            pytest_cases_fixture_ref(
+                "crpatcher_existing_empty_file_fixt"
+            ),  # not a valid json format
+        ],
+    )
+    def test_create_from_invalid_config_file(self, config_file: Path) -> None:
+        with pytest.raises(ValidationError):
+            CRPatcherConfig.create_from_config_file(config_file)
+
 
 def _create_config_file(
     base_dir: Path,
@@ -175,18 +190,3 @@ def _create_config_file(
         json.dump(data, f)
 
     return config_file
-
-
-# invalid file:
-# - not exist TODO(longlp)
-# - exist but not a file TODO(longlp)
-# - exist but not a yaml format TODO(longlp)
-# - exist but not a valid config DONE
-
-# valid:
-# - custom value DONE
-# - default value DONE
-
-#
-#
-#
