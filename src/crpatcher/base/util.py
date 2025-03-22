@@ -1,15 +1,16 @@
+# Copyright 2025 Phi-Long Le. All rights reserved.
+# Use of this source code is governed by a MIT license that can be
+# found in the LICENSE file.
+
 from __future__ import annotations
 
 import codecs
 import hashlib
 import logging
-from dataclasses import fields, is_dataclass
 from pathlib import Path
-from typing import Any, Dict, Type, TypeVar
 
 __all__ = [
     "calculate_file_checksum",
-    "validate_dict_keys_match_dataclass",
     "exists_encoding",
 ]
 
@@ -42,22 +43,3 @@ def calculate_file_checksum(file_path: Path, buffer_size: int = 8192) -> str:
         raise RuntimeError(
             f"Checksum calculation failed for {file_path}: {err}"
         ) from err
-
-
-T = TypeVar("T")
-
-
-def validate_dict_keys_match_dataclass(
-    data: Dict[str, Any], dataclass_type: Type[T]
-) -> bool:
-    if not is_dataclass(dataclass_type):
-        return False
-
-    # Get all field names from the dataclass
-    dataclass_field_names = {field.name for field in fields(dataclass_type)}
-
-    # Check if all dataclass fields are present in the dictionary
-    if not dataclass_field_names.issubset(data.keys()):
-        return False
-
-    return True
