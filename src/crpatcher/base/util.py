@@ -25,6 +25,12 @@ def exists_encoding(enc: str) -> bool:
     return True
 
 
+def is_filename_only(path: Path) -> bool:
+    return (
+        not path.parent or path.parent == Path(".")
+    ) and path.name == path.as_posix()
+
+
 def calculate_file_checksum(file_path: Path, buffer_size: int = 8192) -> str:
     # Input validation
     if not file_path.exists():

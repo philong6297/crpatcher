@@ -10,6 +10,7 @@ from typing import Any, Optional, final
 
 from pydantic import BaseModel, Field, ValidationInfo, field_serializer, field_validator
 
+from crpatcher.base import is_filename_only
 from crpatcher.config.program_context import ProgramContext
 from crpatcher.config.util import CRPATCHER_STRICT_CONFIG
 
@@ -21,12 +22,28 @@ class PatchRequest(BaseModel):
     model_config = CRPATCHER_STRICT_CONFIG()
     repo_dir: Path = Field()
     patch_dir: Path = Field()
+    # same as .gitignore format
+    ignore_patterns: list[str] = Field(default_factory=list)
+    # list of patch file names to keep. CRPatcher will not remove these files if exist.
+    # Only accept file name, not path.
+    keep_patch_files: list[str] = Field(default_factory=list)
 
     @staticmethod
     def create_with_context(
         program_context: Optional[ProgramContext], **kwargs: Any
     ) -> PatchRequest:
         return PatchRequest.model_validate(kwargs, context=program_context)
+
+    @field_validator("keep_patch_files", mode="after")
+    @classmethod
+    def _validate_keep_patch_files(cls, v: list[str]) -> list[str]:
+        for file_name in v:
+            if not is_filename_only(Path(file_name)):
+                raise ValueError(
+                    f'Invalid file name when validating keep_patch_files: "{file_name}".'
+                    f"Only file name is allowed, not path"
+                )
+        return v
 
     @field_validator("repo_dir", "patch_dir", mode="after")
     @classmethod

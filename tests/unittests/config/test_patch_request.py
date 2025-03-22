@@ -5,12 +5,13 @@
 from __future__ import annotations
 
 from contextlib import nullcontext
+from typing import Any
 
 import pytest
 from pydantic import ValidationError
 
 from crpatcher.config import PatchRequest
-from tests.unittests.config.helper import RequestTestInput
+from tests.unittests.config.helper import InputType, RequestTestInput
 
 
 class TestPatchRequest:
@@ -31,9 +32,20 @@ class TestPatchRequest:
                     if should_raise_error
                     else nullcontext()
                 ):
+                    other_args: dict[str, Any] = {}
+                    if test_case.keep_patch_files.type != InputType.DEFAULT:
+                        other_args["keep_patch_files"] = (
+                            test_case.keep_patch_files.safe_data
+                        )
+                    if test_case.ignore_patterns.type != InputType.DEFAULT:
+                        other_args["ignore_patterns"] = (
+                            test_case.ignore_patterns.safe_data
+                        )
+
                     config = PatchRequest(
                         repo_dir=test_case.repo_dir.safe_data.path,
                         patch_dir=test_case.patch_dir.safe_data.path,
+                        **other_args,
                     )
 
                     if not should_raise_error:
@@ -47,6 +59,22 @@ class TestPatchRequest:
                         # Since we are using direct construction, the paths must be all absolute and exactly the same as input
                         assert config.repo_dir == test_case.repo_dir.safe_data.path
                         assert config.patch_dir == test_case.patch_dir.safe_data.path
+
+                        if test_case.keep_patch_files.type != InputType.DEFAULT:
+                            assert (
+                                config.keep_patch_files
+                                == test_case.keep_patch_files.safe_data
+                            )
+                        else:
+                            assert config.keep_patch_files == []
+
+                        if test_case.ignore_patterns.type != InputType.DEFAULT:
+                            assert (
+                                config.ignore_patterns
+                                == test_case.ignore_patterns.safe_data
+                            )
+                        else:
+                            assert config.ignore_patterns == []
 
     def test_construction_with_program_context(
         self,
@@ -63,10 +91,18 @@ class TestPatchRequest:
             with (
                 pytest.raises(ValidationError) if should_raise_error else nullcontext()
             ):
+                other_args: dict[str, Any] = {}
+                if test_case.keep_patch_files.type != InputType.DEFAULT:
+                    other_args["keep_patch_files"] = (
+                        test_case.keep_patch_files.safe_data
+                    )
+                if test_case.ignore_patterns.type != InputType.DEFAULT:
+                    other_args["ignore_patterns"] = test_case.ignore_patterns.safe_data
                 config = PatchRequest.create_with_context(
                     program_context=test_case.program_context.safe_data,
                     repo_dir=test_case.repo_dir.safe_data.path,
                     patch_dir=test_case.patch_dir.safe_data.path,
+                    **other_args,
                 )
 
                 if not should_raise_error:
@@ -96,3 +132,19 @@ class TestPatchRequest:
                     assert config.repo_dir == expected_repo_dir
                     assert config.patch_dir == expected_patch_dir
                     assert config.patch_dir == expected_patch_dir
+
+                    if test_case.keep_patch_files.type != InputType.DEFAULT:
+                        assert (
+                            config.keep_patch_files
+                            == test_case.keep_patch_files.safe_data
+                        )
+                    else:
+                        assert config.keep_patch_files == []
+
+                    if test_case.ignore_patterns.type != InputType.DEFAULT:
+                        assert (
+                            config.ignore_patterns
+                            == test_case.ignore_patterns.safe_data
+                        )
+                    else:
+                        assert config.ignore_patterns == []

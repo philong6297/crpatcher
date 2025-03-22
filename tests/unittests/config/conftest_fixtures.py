@@ -118,13 +118,34 @@ def crpatcher_all_request_test_inputs_fixt(
         for use_valid_path, use_absolute_path in PATH_CONDITIONS
     ]
 
+    keep_patch_files_datas = [
+        Input[list[str]](),  # default
+        Input(data=["patch1.patch", "patch2.patch"], type=InputType.CUSTOM),
+        Input(
+            data=["invalid/file_name.patch", "invalid/path/file"],
+            type=InputType.INVALID,
+        ),  # invalid, only accepts file name, not path
+    ]
+
+    ignore_patterns_datas = [
+        Input[list[str]](),  # default
+        Input(data=["*.patch"], type=InputType.CUSTOM),
+        # currently, there is not invalid. invalid patterns will be ignored instead.
+    ]
+
     return [
         RequestTestInput(
             repo_dir=repo_dir_data,
             patch_dir=patch_dir_data,
             program_context=program_context_data,
+            keep_patch_files=keep_patch_files_data,
+            ignore_patterns=ignore_patterns_data,
         )
-        for repo_dir_data, patch_dir_data, program_context_data in itertools.product(
-            repo_dir_datas, patch_dir_datas, program_context_datas
+        for repo_dir_data, patch_dir_data, program_context_data, keep_patch_files_data, ignore_patterns_data in itertools.product(
+            repo_dir_datas,
+            patch_dir_datas,
+            program_context_datas,
+            keep_patch_files_datas,
+            ignore_patterns_datas,
         )
     ]

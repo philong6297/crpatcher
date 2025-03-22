@@ -6,7 +6,7 @@
 # and should not be used as a standalone file.
 
 from pathlib import Path
-from typing import NamedTuple, Optional
+from typing import Any, NamedTuple, Optional
 
 from crpatcher.config import (
     PatchFileOption,
@@ -52,15 +52,23 @@ class PathTestInput(NamedTuple):
 class RequestTestInput(NamedTuple):
     repo_dir: Input[PathTestInput]
     patch_dir: Input[PathTestInput]
+    keep_patch_files: Input[list[str]]
+    ignore_patterns: Input[list[str]]
     program_context: Input[Optional[ProgramContext]]
 
     @property
     def is_valid(self) -> bool:
-        # there is no default program_context, repo_dir or patch_dir we always need to create it
+        # there is no default program_context, repo_dir or patch_dir. We always need to create it
         if (
             self.repo_dir.type != InputType.CUSTOM
             or self.patch_dir.type != InputType.CUSTOM
             or self.program_context.type != InputType.CUSTOM
+        ):
+            return False
+
+        if (
+            self.ignore_patterns.type == InputType.INVALID
+            or self.keep_patch_files.type == InputType.INVALID
         ):
             return False
 
@@ -85,14 +93,24 @@ class RequestTestInput(NamedTuple):
         repo_dir_data: PathTestInput = self.repo_dir.safe_data
         patch_dir_data: PathTestInput = self.patch_dir.safe_data
 
+        other_args: dict[str, Any] = {}
+
+        if self.keep_patch_files.type != InputType.DEFAULT:
+            other_args["keep_patch_files"] = self.keep_patch_files.safe_data
+
+        if self.ignore_patterns.type != InputType.DEFAULT:
+            other_args["ignore_patterns"] = self.ignore_patterns.safe_data
+
         if self.construction_needs_program_context:
             return PatchRequest.create_with_context(
                 repo_dir=repo_dir_data.path,
                 patch_dir=patch_dir_data.path,
                 program_context=self.program_context.safe_data,
+                **other_args,
             )
 
         return PatchRequest(
             repo_dir=repo_dir_data.path,
             patch_dir=patch_dir_data.path,
+            **other_args,
         )

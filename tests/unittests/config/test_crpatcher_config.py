@@ -177,14 +177,24 @@ def _create_config_file(
         data["patchinfo_file_opt"] = patchinfo_file_opt_test_input.safe_data._asdict()
 
     if requests_test_input.type != InputType.DEFAULT:
-        data["requests"] = [
-            # PatchRequest contains pathlib.Path, which is not serializable by default
-            {
-                "repo_dir": repo.repo_dir.safe_data.path.as_posix(),
-                "patch_dir": repo.patch_dir.safe_data.path.as_posix(),
-            }
-            for repo in requests_test_input.safe_data
-        ]
+        requests: list[dict[str, Any]] = []
+        for request in requests_test_input.safe_data:
+            other_args: dict[str, Any] = {}
+            if request.keep_patch_files.type != InputType.DEFAULT:
+                other_args["keep_patch_files"] = request.keep_patch_files.safe_data
+            if request.ignore_patterns.type != InputType.DEFAULT:
+                other_args["ignore_patterns"] = request.ignore_patterns.safe_data
+
+            requests.append(
+                {
+                    # PatchRequest contains pathlib.Path, which is not serializable by default
+                    "repo_dir": request.repo_dir.safe_data.path.as_posix(),
+                    "patch_dir": request.patch_dir.safe_data.path.as_posix(),
+                    **other_args,
+                }
+            )
+
+        data["requests"] = requests
 
     with config_file.open("w", encoding="utf-8") as f:
         json.dump(data, f)
