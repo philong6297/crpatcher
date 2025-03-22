@@ -10,7 +10,7 @@ from typing import Any, cast
 import pytest
 
 from tests.base.input_data import Input, InputType
-from tests.unittests.config.helper import *
+from tests.unittests.test_config.helper import *
 
 
 def _generate_fixt_params_and_ids(fixture_name: str) -> dict[str, Any]:

@@ -8,8 +8,7 @@ from typing import final
 
 from pydantic import BaseModel, Field, field_validator
 
-from crpatcher.base import exists_encoding
-from crpatcher.config.util import CRPATCHER_STRICT_CONFIG
+from crpatcher.base import CRPATCHER_STRICT_CONFIG, exists_encoding
 
 
 @final

@@ -6,13 +6,13 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, ConfigDict, Field, FilePath, validate_call
+from pydantic import BaseModel, Field, FilePath, validate_call
 
+from crpatcher.base import CRPATCHER_STRICT_CONFIG
 from crpatcher.config.patch_file_option import PatchFileOption
 from crpatcher.config.patch_request import PatchRequest
 from crpatcher.config.patchinfo_file_option import PatchInfoOption
 from crpatcher.config.program_context import ProgramContext
-from crpatcher.config.util import CRPATCHER_STRICT_CONFIG
 
 __all__ = [
     "CRPatcherConfig",

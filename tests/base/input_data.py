@@ -39,8 +39,8 @@ class Input(BaseModel, Generic[T]):
             if len(kwargs) != 1:
                 raise ValueError(
                     "Invalid **kwargs. "
-                    "This function is only intended to use with @parametrize(`name`, list[Input[str]])."
-                    f"Actual: {kwargs}"
+                    f"This function is only intended to use with @parametrize(`name`, list[Input[{expected_type.__name__}]])."
+                    f"Actual: {kwargs}. len = {len(kwargs)}"
                 )
 
             name, input = next(iter(kwargs.items()))

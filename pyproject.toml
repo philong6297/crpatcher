@@ -10,7 +10,6 @@ classifiers = [
   "Development Status :: 4 - Beta",
   "Environment :: Console",
   "Intended Audience :: Developers",
-  "License :: OSI Approved :: MIT License",
   "Natural Language :: English",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3 :: Only",
@@ -20,7 +19,7 @@ classifiers = [
 dependencies = ["pydantic>=2.10"]
 description = "A tool to manage patches for submodules in Chromium-based project."
 keywords = ["chromium", "patches", "submodules"]
-license = { file = "LICENSE" }
+license = "MIT"
 name = "crpatcher"
 readme = "README.md"
 requires-python = ">=3.11"

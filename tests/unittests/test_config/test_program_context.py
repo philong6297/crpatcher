@@ -29,10 +29,10 @@ class ConfigFileTestCases:
         )  # Directory instead of file
 
     def case_invalid_use_non_existent_file(
-        self, crpatcher_non_existent_file: Path
+        self, crpatcher_non_existent_file_fixt: Path
     ) -> Input[Path]:
         return Input(
-            data=crpatcher_non_existent_file, type=InputType.INVALID
+            data=crpatcher_non_existent_file_fixt, type=InputType.INVALID
         )  # Non-existent file
 
 

@@ -4,7 +4,7 @@
 
 from pydantic import BaseModel, Field, FilePath
 
-from crpatcher.config.util import CRPATCHER_STRICT_CONFIG
+from crpatcher.base import CRPATCHER_STRICT_CONFIG
 
 
 class ProgramContext(BaseModel):

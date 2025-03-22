@@ -11,7 +11,7 @@ import pytest
 from pydantic import ValidationError
 
 from crpatcher.config import PatchRequest
-from tests.unittests.config.helper import InputType, RequestTestInput
+from tests.unittests.test_config.helper import InputType, RequestTestInput
 
 
 class TestPatchRequest:

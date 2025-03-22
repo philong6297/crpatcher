@@ -15,8 +15,8 @@ from pydantic import ValidationError
 from crpatcher.config import CRPatcherConfig, PatchFileOption, PatchInfoOption
 from tests.base.input_data import Input, InputType
 from tests.base.pytest_cases import pytest_cases_fixture_ref, pytest_cases_parametrize
-from tests.unittests.config._test_crpatcher_config_fixtures import *
-from tests.unittests.config.helper import (
+from tests.unittests.test_config._test_crpatcher_config_fixtures import *
+from tests.unittests.test_config.helper import (
     PatchFileOptionTestInput,
     PatchInfoOptionTestInput,
     RequestTestInput,
@@ -133,7 +133,7 @@ class TestCRPatcherConfig:
     @pytest_cases_parametrize(
         "config_file",
         [
-            pytest_cases_fixture_ref("crpatcher_non_existent_file"),  # not exist
+            pytest_cases_fixture_ref("crpatcher_non_existent_file_fixt"),  # not exist
             pytest_cases_fixture_ref("crpatcher_existing_empty_dir_fixt"),  # not a file
             pytest_cases_fixture_ref(
                 "crpatcher_existing_empty_file_fixt"

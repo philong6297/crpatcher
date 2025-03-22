@@ -10,9 +10,8 @@ from typing import Any, Optional, final
 
 from pydantic import BaseModel, Field, ValidationInfo, field_serializer, field_validator
 
-from crpatcher.base import is_filename_only
+from crpatcher.base import CRPATCHER_STRICT_CONFIG, is_filename_only
 from crpatcher.config.program_context import ProgramContext
-from crpatcher.config.util import CRPATCHER_STRICT_CONFIG
 
 __all__ = ["PatchRequest"]
 
