@@ -53,7 +53,7 @@ def is_filename_only(path: Path) -> bool:
 )
 def calculate_file_checksum_sha256(
     file_path: FilePath,
-    buffer_size: Annotated[int, Field(ge=1, default=8192)] = 8192,
+    buffer_size: int = Field(ge=1, default=8192),
 ) -> str:
     try:
         checksum_generator = hashlib.new("sha256")

@@ -21,7 +21,7 @@ class PatchRequest(BaseModel):
     model_config = CRPATCHER_STRICT_CONFIG()
     repo_dir: Path = Field()
     patch_dir: Path = Field()
-    # same as .gitignore format
+    # same as .gitignore format. Used to ignore matched modified files in the repo_dir when generating patches
     ignore_patterns: list[str] = Field(default_factory=list)
     # list of patch file names to keep. CRPatcher will not remove these files if exist.
     # Only accept file name, not path.
