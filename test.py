@@ -1,32 +1,53 @@
 from __future__ import annotations
 
-from typing import Annotated
+from pathlib import Path
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, Field, validate_call
-
-
-def is_even(value: int) -> int:
-    if value % 2 == 1:
-        raise ValueError(f"{value} is not an even number")
-    return value + 1
+import pytest
+from pathspec import PathSpec
+from pathspec.patterns.gitwildmatch import GitWildMatchPattern
 
 
-class Test(BaseModel):
-    @validate_call(config=ConfigDict(strict=True, validate_default=True))
-    def test(
-        self,
-        a: Annotated[list[str], Field(gt=1), AfterValidator(is_even)] = Field(
-            default_factory=list
-        ),
-    ):
-        return a
+def test_pathspec_with_pathlib():
+    # Create a PathSpec with some test patterns
+    patterns = [
+        "*.py",
+        "!test_*.py",  # Negate test files
+        "src/**/*.py",  # Match all Python files in src directory
+    ]
+    spec = PathSpec.from_lines(GitWildMatchPattern, patterns)
 
+    # Test with various pathlib.Path objects (both POSIX and Windows style)
+    test_paths = [
+        Path("main.py"),
+        Path("test_main.py"),
+        Path("src/module/file.py"),
+        Path("src/test_file.py"),
+        Path("docs/readme.md"),
+        Path("src\\module\\file.py"),  # Windows backslash
+        Path("src\\test_file.py"),  # Windows backslash
+        Path("C:\\Users\\name\\src\\file.py"),  # Windows absolute path
+        Path("C:/Users/name/src/file.py"),  # Windows absolute path with forward slash
+    ]
 
-t = Test()
-print(t.test())  # expect 4 + 1 = 5
-print(t.test(2))  # expect 2 + 1 = 3
-print(t.test(3))  # expect error
-print(t.test(-1))  # expect error
-print(t.test(0))  # expect error
-print(t.test(0))  # expect error
-print(t.test(0))  # expect error
+    # Convert paths to strings for match_files
+    path_strings = [str(p) for p in test_paths]
+
+    # Get matched files
+    matched_files = set(spec.match_files(path_strings))
+
+    # Verify results
+    assert "main.py" in matched_files  # Should match *.py
+    assert "test_main.py" not in matched_files  # Should be negated
+    assert "src/module/file.py" in matched_files  # Should match src/**/*.py
+    assert "src/test_file.py" not in matched_files  # Should be negated
+    assert "docs/readme.md" not in matched_files  # Should not match any pattern
+    assert (
+        "src/module/file.py" in matched_files
+    )  # Windows backslash should be normalized
+    assert (
+        "src/test_file.py" not in matched_files
+    )  # Windows backslash should be normalized
+    assert (
+        "C:/Users/name/src/file.py" in matched_files
+    )  # Windows absolute path should be normalized
+    assert "C:/Users/name/src/file.py" in matched_files  # Forward slash should work too

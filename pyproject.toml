@@ -16,7 +16,7 @@ classifiers = [
   "Topic :: Software Development :: Build Tools",
   "Topic :: Utilities",
 ]
-dependencies = ["gitpython>=3.1", "pydantic>=2.10"]
+dependencies = ["gitpython>=3.1", "pathspec>=0.12", "pydantic>=2.10"]
 description = "A tool to manage patches for submodules in Chromium-based project."
 keywords = ["chromium", "patches", "submodules"]
 license = "MIT"

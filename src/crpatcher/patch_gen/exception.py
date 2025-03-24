@@ -9,6 +9,7 @@ __all__ = [
     "GitDiffError",
     "PatchDirCreationError",
     "PatchWriteError",
+    "IgnorePatternError",
 ]
 
 
@@ -33,4 +34,8 @@ class PatchDirCreationError(PatchGenError):
 
 
 class PatchWriteError(PatchGenError):
+    pass
+
+
+class IgnorePatternError(PatchGenError):
     pass
