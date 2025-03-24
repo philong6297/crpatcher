@@ -10,6 +10,7 @@ __all__ = [
     "PatchDirCreationError",
     "PatchWriteError",
     "IgnorePatternError",
+    "StalePatchRemovalError",
 ]
 
 
@@ -38,4 +39,8 @@ class PatchWriteError(PatchGenError):
 
 
 class IgnorePatternError(PatchGenError):
+    pass
+
+
+class StalePatchRemovalError(PatchGenError):
     pass

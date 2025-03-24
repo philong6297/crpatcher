@@ -5,9 +5,7 @@
 from __future__ import annotations
 
 import logging
-import os
 from pathlib import Path
-from typing import Annotated, Callable, Optional
 
 from git import Repo as GitPythonRepo
 from git.exc import InvalidGitRepositoryError as GitPythonInvalidGitRepositoryError
@@ -22,6 +20,7 @@ from crpatcher.patch_gen.exception import (
     InvalidGitRepoError,
     PatchDirCreationError,
     PatchWriteError,
+    StalePatchRemovalError,
 )
 from crpatcher.patch_gen.util import run_git_diff
 
@@ -84,14 +83,17 @@ class GitPatchFileGenerator:
             # Format patch filename:
             # a/relative/path/to/repo/dir/modified_file.txt ->
             # a_relative_path_to_repo_dir_modified_file.txt.patch (if replacement_separator = "_")
+            formatted_name = (
+                filepath.relative_to(
+                    self._patch_request.repo_dir
+                )  # convert to relative path as we dont need to include the repo dir in the filename
+                .as_posix()  # use posix to get rid of different OS path separators
+                .replace(
+                    "/", self._patch_opt.replacement_separator
+                )  # replace slashes with replacement_separator
+            )
             filename = (
-                f"{
-                    filepath.relative_to(
-                        self._patch_request.repo_dir
-                    )  # convert to relative path as we dont need to include the repo dir in the filename
-                    .as_posix()  # use posix to get rid of different OS path separators
-                    .replace('/', self._patch_opt.replacement_separator)
-                }"
+                f"{formatted_name}"
                 f".{self._patch_opt.ext}"  # file extension
             )
             patch_file_names.append(filename)
@@ -129,36 +131,33 @@ class GitPatchFileGenerator:
 
         return patch_file_names
 
-    def remove_stale_patch_files(self, patch_filenames: list[str]) -> None:
+    def remove_stale_patch_files(self, updated_patch_filenames: list[str]) -> None:
         _logger.info(f"Removing stale .{self._patch_opt.ext} files:")
 
-        try:
-            existing_patch_files = [
-                f.name
-                for f in self._patch_request.patch_dir.glob(f"*.{self._patch_opt.ext}")
-            ]
-            valid_filenames = set(
-                patch_filenames + self._patch_request.keep_patch_files
-            )
-            to_remove_filenames = [
-                f for f in existing_patch_files if f not in valid_filenames
-            ]
+        existing_patch_files = {
+            f.name
+            for f in self._patch_request.patch_dir.glob(f"*.{self._patch_opt.ext}")
+        }
+        patch_files_to_keep = set(
+            updated_patch_filenames + self._patch_request.keep_patch_files
+        )
+        to_remove_filenames = [
+            f for f in existing_patch_files if f not in patch_files_to_keep
+        ]
 
-            if not to_remove_filenames:
-                _logger.info("No stale .{self._patch_opt.ext} files to remove.")
-                return
+        if not to_remove_filenames:
+            _logger.info(f"No stale .{self._patch_opt.ext} files to remove.")
+            return
 
-            remove_count = len(to_remove_filenames)
-            for i, filename in enumerate(to_remove_filenames, 1):
-                try:
-                    (self._patch_request.patch_dir / filename).unlink()
-                    _logger.info(f"----removed {i}/{remove_count}: {filename}")
-                except Exception as e:
-                    raise Exception(
-                        f"Failed to remove stale patch file {filename}: {e}"
-                    ) from e
-        except Exception as e:
-            raise Exception(f"Failed to process stale patch files: {e}") from e
+        remove_count = len(to_remove_filenames)
+        for i, filename in enumerate(to_remove_filenames, 1):
+            try:
+                (self._patch_request.patch_dir / filename).unlink()
+                _logger.info(f"----removed {i}/{remove_count}: {filename}")
+            except Exception as e:
+                raise StalePatchRemovalError(
+                    f"Failed to remove stale patch file {filename}: {e}"
+                ) from e
 
     def _get_modified_absolute_filepaths(self) -> list[Path]:
         cmd_output: str = run_git_diff(
