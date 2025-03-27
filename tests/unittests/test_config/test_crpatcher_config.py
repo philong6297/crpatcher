@@ -12,13 +12,13 @@ from typing import Any, Dict
 import pytest
 from pydantic import ValidationError
 
-from crpatcher.config import CRPatcherConfig, PatchFileOption, PatchInfoOption
+from crpatcher.config import CRPatcherConfig, PatchFileOption, PatchInfoFileOption
 from tests.base.input_data import Input, InputType
 from tests.base.pytest_cases import pytest_cases_fixture_ref, pytest_cases_parametrize
 from tests.unittests.test_config._test_crpatcher_config_fixtures import *
 from tests.unittests.test_config.helper import (
     PatchFileOptionTestInput,
-    PatchInfoOptionTestInput,
+    PatchInfoFileOptionTestInput,
     RequestTestInput,
 )
 
@@ -26,7 +26,7 @@ from tests.unittests.test_config.helper import (
 def CRPATCHER_CONFIG_DEFAULT() -> dict[str, Any]:
     return {
         "patch_file_opt": PatchFileOption(),
-        "patchinfo_file_opt": PatchInfoOption(),
+        "patchinfo_file_opt": PatchInfoFileOption(),
         "requests": [],
     }
 
@@ -35,7 +35,7 @@ class TestCRPatcherConfig:
     def test_direct_construction(
         self,
         patch_file_opt_fixt: Input[PatchFileOptionTestInput],
-        patchinfo_file_opt_fixt: Input[PatchInfoOptionTestInput],
+        patchinfo_file_opt_fixt: Input[PatchInfoFileOptionTestInput],
         requests_fixt: Input[list[RequestTestInput]],
     ) -> None:
         # Direct construction can only be tested with valid input data. Since any invalid input should raise error from the construction of each field member itself.
@@ -80,13 +80,13 @@ class TestCRPatcherConfig:
 
     def test_create_from_existing_config_file(
         self,
-        crpatcher_base_dir_fixt: Path,
+        fixt_crpatcher_base_dir: Path,
         patch_file_opt_fixt: Input[PatchFileOptionTestInput],
-        patchinfo_file_opt_fixt: Input[PatchInfoOptionTestInput],
+        patchinfo_file_opt_fixt: Input[PatchInfoFileOptionTestInput],
         requests_fixt: Input[list[RequestTestInput]],
     ) -> None:
         valid_config_file = _create_config_file(
-            crpatcher_base_dir_fixt,
+            fixt_crpatcher_base_dir,
             patch_file_opt_fixt,
             patchinfo_file_opt_fixt,
             requests_fixt,
@@ -133,10 +133,10 @@ class TestCRPatcherConfig:
     @pytest_cases_parametrize(
         "config_file",
         [
-            pytest_cases_fixture_ref("crpatcher_non_existent_file_fixt"),  # not exist
-            pytest_cases_fixture_ref("crpatcher_existing_empty_dir_fixt"),  # not a file
+            pytest_cases_fixture_ref("fixt_crpatcher_non_existent_file"),  # not exist
+            pytest_cases_fixture_ref("fixt_crpatcher_existing_empty_dir"),  # not a file
             pytest_cases_fixture_ref(
-                "crpatcher_existing_empty_file_fixt"
+                "fixt_crpatcher_existing_empty_file"
             ),  # not a valid json format
         ],
     )
@@ -148,7 +148,7 @@ class TestCRPatcherConfig:
 def _create_config_file(
     base_dir: Path,
     patch_file_opt_test_input: Input[PatchFileOptionTestInput],
-    patchinfo_file_opt_test_input: Input[PatchInfoOptionTestInput],
+    patchinfo_file_opt_test_input: Input[PatchInfoFileOptionTestInput],
     requests_test_input: Input[list[RequestTestInput]],
 ) -> Path:
     # Construct the file name based on fixture states

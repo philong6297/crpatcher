@@ -8,13 +8,13 @@ import logging
 from pathlib import Path
 
 from git import Repo as GitPythonRepo
-from git.exc import InvalidGitRepositoryError as GitPythonInvalidGitRepositoryError
-from git.exc import NoSuchPathError as GitPythonNoSuchPathError
+from git.exc import GitError as GitPythonError
 from pathspec import PathSpec
 from pathspec.patterns.gitwildmatch import GitWildMatchPattern
 
 from crpatcher.config import PatchFileOption, PatchRequest
 from crpatcher.patch_gen.exception import (
+    GitDiffError,
     GitRepoNotFoundError,
     IgnorePatternError,
     InvalidGitRepoError,
@@ -22,7 +22,6 @@ from crpatcher.patch_gen.exception import (
     PatchWriteError,
     StalePatchRemovalError,
 )
-from crpatcher.patch_gen.util import run_git_diff
 
 _logger = logging.getLogger(__name__)
 
@@ -38,15 +37,8 @@ class GitPatchFileGenerator:
 
         try:
             self._repo = GitPythonRepo(self._patch_request.repo_dir)
-        except GitPythonNoSuchPathError as e:
-            raise GitRepoNotFoundError("TODO(longlp): add error message") from e
-        except GitPythonInvalidGitRepositoryError as e:
+        except GitPythonError as e:
             raise InvalidGitRepoError("TODO(longlp): add error message") from e
-
-        try:
-            self._patch_request.patch_dir.mkdir(parents=True, exist_ok=True)
-        except FileExistsError as e:
-            raise PatchDirCreationError(f"TODO(longlp): add error message") from e
 
         # Validate patch directory requirements
         # Check for non-files and wrong extensions
@@ -56,7 +48,6 @@ class GitPatchFileGenerator:
                     raise PatchDirCreationError(f"TODO(longlp): add error message")
                 if p.suffix != f".{self._patch_opt.ext}":
                     raise PatchDirCreationError(f"TODO(longlp): add error message")
-
         except Exception as e:
             raise PatchDirCreationError(f"TODO(longlp): add error message") from e
 
@@ -107,8 +98,7 @@ class GitPatchFileGenerator:
             modified_absolute_filepaths, patch_file_names
         ):
             relative_filepath = modified_file.relative_to(self._patch_request.repo_dir)
-            patch_content = run_git_diff(
-                self._repo,
+            patch_content = self._run_git_diff(
                 [
                     "--src-prefix=a/",
                     "--dst-prefix=b/",
@@ -160,8 +150,7 @@ class GitPatchFileGenerator:
                 ) from e
 
     def _get_modified_absolute_filepaths(self) -> list[Path]:
-        cmd_output: str = run_git_diff(
-            self._repo,
+        cmd_output: str = self._run_git_diff(
             [
                 "--ignore-submodules",
                 "--diff-filter=M",
@@ -187,6 +176,12 @@ class GitPatchFileGenerator:
             raise IgnorePatternError(f"TODO(longlp): add error message") from e
 
         return list(modified_relative_files)
+
+    def _run_git_diff(self, args: list[str]) -> str:
+        try:
+            return self._repo.git.diff(*args)
+        except Exception as e:
+            raise GitDiffError(f"Failed to run git diff with args {args}: {e}") from e
 
     def update_patches(self) -> None:
         _logger.info(

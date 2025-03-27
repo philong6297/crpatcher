@@ -15,24 +15,24 @@ from tests.base.pytest_cases import pytest_cases_parametrize_with_cases
 
 class ConfigFileTestCases:
     def case_valid_use_existing_file(
-        self, crpatcher_existing_empty_file_fixt: Path
+        self, fixt_crpatcher_existing_empty_file: Path
     ) -> Input[Path]:
         return Input(
-            data=crpatcher_existing_empty_file_fixt, type=InputType.CUSTOM
+            data=fixt_crpatcher_existing_empty_file, type=InputType.CUSTOM
         )  # Valid file
 
     def case_invalid_use_directory(
-        self, crpatcher_existing_empty_dir_fixt: Path
+        self, fixt_crpatcher_existing_empty_dir: Path
     ) -> Input[Path]:
         return Input(
-            data=crpatcher_existing_empty_dir_fixt, type=InputType.INVALID
+            data=fixt_crpatcher_existing_empty_dir, type=InputType.INVALID
         )  # Directory instead of file
 
     def case_invalid_use_non_existent_file(
-        self, crpatcher_non_existent_file_fixt: Path
+        self, fixt_crpatcher_non_existent_file: Path
     ) -> Input[Path]:
         return Input(
-            data=crpatcher_non_existent_file_fixt, type=InputType.INVALID
+            data=fixt_crpatcher_non_existent_file, type=InputType.INVALID
         )  # Non-existent file
 
 

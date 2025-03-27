@@ -24,7 +24,7 @@
       "title": "PatchFileOption",
       "type": "object"
     },
-    "PatchInfoOption": {
+    "PatchInfoFileOption": {
       "additionalProperties": false,
       "properties": {
         "version": {
@@ -45,7 +45,7 @@
           "type": "string"
         }
       },
-      "title": "PatchInfoOption",
+      "title": "PatchInfoFileOption",
       "type": "object"
     },
     "PatchRequest": {
@@ -81,7 +81,7 @@
       "default": []
     },
     "patchinfo_file_opt": {
-      "$ref": "#/$defs/PatchInfoOption",
+      "$ref": "#/$defs/PatchInfoFileOption",
       "default": {}
     },
     "patch_file_opt": {

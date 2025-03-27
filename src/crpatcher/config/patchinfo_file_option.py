@@ -12,7 +12,7 @@ from crpatcher.base import CRPATCHER_STRICT_CONFIG, exists_encoding
 
 
 @final
-class PatchInfoOption(BaseModel):
+class PatchInfoFileOption(BaseModel):
     model_config = CRPATCHER_STRICT_CONFIG()
     version: int = Field(
         default=1,

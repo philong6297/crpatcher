@@ -8,42 +8,42 @@ import pytest
 
 
 @pytest.fixture(scope="class")
-def crpatcher_base_dir_fixt(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    dir = tmp_path_factory.getbasetemp().joinpath("crpatcher_base_dir_fixt").absolute()
+def fixt_crpatcher_base_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    dir = tmp_path_factory.getbasetemp().joinpath("fixt_crpatcher_base_dir").absolute()
     dir.mkdir(parents=True, exist_ok=True)
     return dir
 
 
 @pytest.fixture(scope="class")
-def crpatcher_existing_empty_dir_fixt(crpatcher_base_dir_fixt: Path) -> Path:
-    dir = crpatcher_base_dir_fixt.joinpath("existing_dir").absolute()
+def fixt_crpatcher_existing_empty_dir(fixt_crpatcher_base_dir: Path) -> Path:
+    dir = fixt_crpatcher_base_dir.joinpath("existing_dir").absolute()
     dir.mkdir(parents=True, exist_ok=True)
     return dir
 
 
 @pytest.fixture(scope="class")
-def crpatcher_non_existent_dir_fixt(crpatcher_base_dir_fixt: Path) -> Path:
-    dir = crpatcher_base_dir_fixt.joinpath("non_existent_dir").absolute()
+def fixt_crpatcher_non_existent_dir(fixt_crpatcher_base_dir: Path) -> Path:
+    dir = fixt_crpatcher_base_dir.joinpath("non_existent_dir").absolute()
     if dir.exists():
-        raise FileExistsError(f"crpatcher_non_existent_dir_fixt={dir} already exists")
+        raise FileExistsError(f"fixt_crpatcher_non_existent_dir={dir} already exists")
     return dir
 
 
 @pytest.fixture(scope="class")
-def crpatcher_existing_empty_file_fixt(crpatcher_base_dir_fixt: Path) -> Path:
-    file = crpatcher_base_dir_fixt.joinpath("temp_file.txt").absolute()
+def fixt_crpatcher_existing_empty_file(fixt_crpatcher_base_dir: Path) -> Path:
+    file = fixt_crpatcher_base_dir.joinpath("temp_file.txt").absolute()
     if not file.exists():
         file.touch()
     if not file.is_file():
         raise FileNotFoundError(
-            f"crpatcher_existing_empty_file_fixt={file} is not a file"
+            f"fixt_crpatcher_existing_empty_file={file} is not a file"
         )
     return file
 
 
 @pytest.fixture(scope="class")
-def crpatcher_non_existent_file_fixt(crpatcher_base_dir_fixt: Path) -> Path:
-    file = crpatcher_base_dir_fixt.joinpath("non_existent_file.txt").absolute()
+def fixt_crpatcher_non_existent_file(fixt_crpatcher_base_dir: Path) -> Path:
+    file = fixt_crpatcher_base_dir.joinpath("non_existent_file.txt").absolute()
     if file.is_file():
-        raise FileExistsError(f"crpatcher_non_existent_file_fixt={file} already exists")
+        raise FileExistsError(f"fixt_crpatcher_non_existent_file={file} already exists")
     return file

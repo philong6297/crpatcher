@@ -90,13 +90,13 @@ def patch_file_opt_fixt(
 )
 def patchinfo_file_opt_fixt(
     request: pytest.FixtureRequest,
-) -> Input[PatchInfoOptionTestInput]:
+) -> Input[PatchInfoFileOptionTestInput]:
     match cast(InputType, request.param):
         case InputType.DEFAULT:
             return Input()
         case InputType.CUSTOM:
             return Input(
-                data=PatchInfoOptionTestInput(
+                data=PatchInfoFileOptionTestInput(
                     version=2,
                     ext="custom_ext",
                     encoding="ascii",
@@ -105,7 +105,7 @@ def patchinfo_file_opt_fixt(
             )
         case InputType.INVALID:
             return Input(
-                data=PatchInfoOptionTestInput(
+                data=PatchInfoFileOptionTestInput(
                     version=-1,
                     ext="invalid$ext",
                     encoding="invalid_encoding",

@@ -5,9 +5,9 @@
 # pyright: reportUnusedImport=false
 
 from tests.unittests.conftest_fixtures import (
-    crpatcher_base_dir_fixt,
-    crpatcher_existing_empty_dir_fixt,
-    crpatcher_existing_empty_file_fixt,
-    crpatcher_non_existent_dir_fixt,
-    crpatcher_non_existent_file_fixt,
+    fixt_crpatcher_base_dir,
+    fixt_crpatcher_existing_empty_dir,
+    fixt_crpatcher_existing_empty_file,
+    fixt_crpatcher_non_existent_dir,
+    fixt_crpatcher_non_existent_file,
 )

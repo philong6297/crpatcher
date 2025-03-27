@@ -58,7 +58,7 @@ def pytest_cases_parametrize(
     )
 
 
-@_lib_function_decorator
+# @_lib_function_decorator
 def pytest_cases_fixture(
     scope: Any = "function",
     autouse: Any = False,

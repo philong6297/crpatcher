@@ -8,7 +8,7 @@ from typing import Any, Dict
 import pytest
 from pydantic import ValidationError
 
-from crpatcher.config import PatchInfoOption
+from crpatcher.config import PatchInfoFileOption
 from tests.base.input_data import Input, InputType
 from tests.base.pytest_cases import pytest_cases_parametrize
 
@@ -69,10 +69,10 @@ def test_patchinfo_file_option(
     }
 
     with context:
-        config = PatchInfoOption(**kwargs)
+        config = PatchInfoFileOption(**kwargs)
 
         if not should_raise_error:
-            # For assertions, compare with value if not DEFAULT, otherwise use PatchInfoOption's defaults
+            # For assertions, compare with value if not DEFAULT, otherwise use PatchInfoFileOption's defaults
             expected_version = (
                 version.safe_data
                 if version.type != InputType.DEFAULT

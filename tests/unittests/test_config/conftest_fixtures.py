@@ -16,14 +16,14 @@ from tests.unittests.test_config.helper import *
 
 @pytest.fixture(scope="class")
 def crpatcher_all_request_test_inputs_fixt(
-    crpatcher_existing_empty_file_fixt: Path,
-    crpatcher_base_dir_fixt: Path,
-    crpatcher_existing_empty_dir_fixt: Path,
-    crpatcher_non_existent_dir_fixt: Path,
+    fixt_crpatcher_existing_empty_file: Path,
+    fixt_crpatcher_base_dir: Path,
+    fixt_crpatcher_existing_empty_dir: Path,
+    fixt_crpatcher_non_existent_dir: Path,
 ) -> list[RequestTestInput]:
     program_context_datas: list[Input[Optional[ProgramContext]]] = [
         Input(
-            data=ProgramContext(config_file=crpatcher_existing_empty_file_fixt),
+            data=ProgramContext(config_file=fixt_crpatcher_existing_empty_file),
             type=InputType.CUSTOM,
         ),  # build validation context from existing file
         Input(data=None, type=InputType.CUSTOM),  # no validation context
@@ -47,9 +47,9 @@ def crpatcher_all_request_test_inputs_fixt(
         use_absolute_path: bool,
     ) -> Input[PathTestInput]:
         path_value = (
-            crpatcher_existing_empty_dir_fixt
+            fixt_crpatcher_existing_empty_dir
             if use_valid_path
-            else crpatcher_non_existent_dir_fixt
+            else fixt_crpatcher_non_existent_dir
         )
 
         return Input(
@@ -57,9 +57,9 @@ def crpatcher_all_request_test_inputs_fixt(
                 path=(
                     path_value
                     if use_absolute_path
-                    else path_value.relative_to(crpatcher_base_dir_fixt)
+                    else path_value.relative_to(fixt_crpatcher_base_dir)
                 ),
-                base_dir=crpatcher_base_dir_fixt,
+                base_dir=fixt_crpatcher_base_dir,
                 use_absolute_path=use_absolute_path,
             ),
             type=InputType.CUSTOM if use_valid_path else InputType.INVALID,

@@ -9,11 +9,7 @@ from pathspec.patterns.gitwildmatch import GitWildMatchPattern
 
 def test_pathspec_with_pathlib():
     # Create a PathSpec with some test patterns
-    patterns = [
-        "*.py",
-        "!test_*.py",  # Negate test files
-        "src/**/*.py",  # Match all Python files in src directory
-    ]
+    patterns = []
     spec = PathSpec.from_lines(GitWildMatchPattern, patterns)
 
     # Test with various pathlib.Path objects (both POSIX and Windows style)
@@ -34,6 +30,8 @@ def test_pathspec_with_pathlib():
 
     # Get matched files
     matched_files = set(spec.match_files(path_strings))
+
+    print(matched_files)
 
     # Verify results
     assert "main.py" in matched_files  # Should match *.py

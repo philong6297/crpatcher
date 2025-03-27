@@ -10,7 +10,7 @@ from typing import Any, NamedTuple, Optional
 
 from crpatcher.config import (
     PatchFileOption,
-    PatchInfoOption,
+    PatchInfoFileOption,
     PatchRequest,
     ProgramContext,
 )
@@ -30,13 +30,13 @@ class PatchFileOptionTestInput(NamedTuple):
         )
 
 
-class PatchInfoOptionTestInput(NamedTuple):
+class PatchInfoFileOptionTestInput(NamedTuple):
     version: int
     ext: str
     encoding: str
 
-    def build_patchinfo_file_opt(self) -> PatchInfoOption:
-        return PatchInfoOption(
+    def build_patchinfo_file_opt(self) -> PatchInfoFileOption:
+        return PatchInfoFileOption(
             version=self.version,
             encoding=self.encoding,
             ext=self.ext,
@@ -55,6 +55,8 @@ class RequestTestInput(NamedTuple):
     keep_patch_files: Input[list[str]]
     ignore_patterns: Input[list[str]]
     program_context: Input[Optional[ProgramContext]]
+    patch_file_opt: Input[PatchFileOptionTestInput]
+    patchinfo_file_opt: Input[PatchInfoFileOptionTestInput]
 
     @property
     def is_valid(self) -> bool:
@@ -69,6 +71,8 @@ class RequestTestInput(NamedTuple):
         if (
             self.ignore_patterns.type == InputType.INVALID
             or self.keep_patch_files.type == InputType.INVALID
+            or self.patch_file_opt.type == InputType.INVALID
+            or self.patchinfo_file_opt.type == InputType.INVALID
         ):
             return False
 

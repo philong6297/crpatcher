@@ -7,7 +7,10 @@ import logging
 import sys
 from pathlib import Path
 
+from crpatcher.command_generate_patches import command_generate_patches
 from crpatcher.config import CRPatcherConfig
+
+_logger = logging.getLogger(__name__)
 
 
 def _init_config(args: argparse.Namespace) -> CRPatcherConfig:
@@ -58,14 +61,15 @@ def main() -> None:
         _setup_print_report(args)
 
         if args.command == "apply_patches":
-            command_apply_patches(config=config, should_print_report=args.print_report)
+            # TODO(longlp): implement
+            pass
         elif args.command == "generate_patches":
             command_generate_patches(config=config)
         else:
             parser.print_help()
 
     except Exception as e:
-        print(f"Unexpected error: {e}", file=sys.stderr)
+        _logger.error(f"Unexpected error: {e}")
         sys.exit(1)
 
 

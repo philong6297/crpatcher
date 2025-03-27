@@ -5,12 +5,24 @@
 from __future__ import annotations
 
 import os
+from functools import cached_property
 from pathlib import Path
-from typing import Any, Optional, final
+from typing import Any, Optional, Self, final
 
-from pydantic import BaseModel, Field, ValidationInfo, field_serializer, field_validator
+from pathspec import PathSpec
+from pathspec.patterns.gitwildmatch import GitWildMatchPattern
+from pydantic import (
+    BaseModel,
+    Field,
+    ValidationInfo,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
 
 from crpatcher.base import CRPATCHER_STRICT_CONFIG, is_filename_only
+from crpatcher.config.patch_file_option import PatchFileOption
+from crpatcher.config.patchinfo_file_option import PatchInfoFileOption
 from crpatcher.config.program_context import ProgramContext
 
 __all__ = ["PatchRequest"]
@@ -19,19 +31,61 @@ __all__ = ["PatchRequest"]
 @final
 class PatchRequest(BaseModel):
     model_config = CRPATCHER_STRICT_CONFIG()
+
+    # must exist
     repo_dir: Path = Field()
+    # must exist
     patch_dir: Path = Field()
+
     # same as .gitignore format. Used to ignore matched modified files in the repo_dir when generating patches
     ignore_patterns: list[str] = Field(default_factory=list)
     # list of patch file names to keep. CRPatcher will not remove these files if exist.
     # Only accept file name, not path.
     keep_patch_files: list[str] = Field(default_factory=list)
 
+    patchinfo_file_opt: PatchInfoFileOption = Field(
+        default_factory=PatchInfoFileOption,
+    )
+    patch_file_opt: PatchFileOption = Field(
+        default_factory=PatchFileOption,
+    )
+
+    @cached_property
+    def ignore_pattern_matcher(self) -> Optional[PathSpec]:
+        if not self.ignore_patterns:
+            return None
+        try:
+            return PathSpec.from_lines(GitWildMatchPattern, self.ignore_patterns)
+        except Exception as e:
+            # TODO(longlp): add error message
+            raise e
+
     @staticmethod
     def create_with_context(
         program_context: Optional[ProgramContext], **kwargs: Any
     ) -> PatchRequest:
         return PatchRequest.model_validate(kwargs, context=program_context)
+
+    @model_validator(mode="after")
+    def _validate_patch_dirs(self) -> Self:
+        # validate each patch dir:
+        # 1. no non-file: symlink, sub dir
+        # 2. no file with wrong extension
+
+        for file in self.patch_dir.iterdir():
+            if not file.is_file():
+                raise ValueError(
+                    f"patch directory {self.patch_dir.as_posix()} is dirty:{os.linesep}"
+                    f"contains non-file: {file.as_posix()}"
+                )
+            if file.suffix != f".{self.patch_file_opt.ext}":
+                raise ValueError(
+                    f"patch directory {self.patch_dir.as_posix()} is dirty:{os.linesep}"
+                    f"contains patch file with wrong extension: {file.as_posix()}.{os.linesep}"
+                    f"Expected extension: {self.patch_file_opt.ext}"
+                )
+
+        return self
 
     @field_validator("keep_patch_files", mode="after")
     @classmethod

@@ -17,8 +17,8 @@ from tests.base.pytest_cases import *
 
 
 @pytest.fixture(scope="class")
-def existing_file_with_content_fixt(crpatcher_base_dir_fixt: Path) -> Path:
-    file = crpatcher_base_dir_fixt.joinpath("hello_world.txt").absolute()
+def existing_file_with_content_fixt(fixt_crpatcher_base_dir: Path) -> Path:
+    file = fixt_crpatcher_base_dir.joinpath("hello_world.txt").absolute()
     if not file.exists():
         file.touch()
     if not file.is_file():
@@ -31,17 +31,17 @@ def existing_file_with_content_fixt(crpatcher_base_dir_fixt: Path) -> Path:
     "path,expected_checksum,type",
     [
         (
-            pytest_cases_fixture_ref("crpatcher_existing_empty_file_fixt"),
+            pytest_cases_fixture_ref("fixt_crpatcher_existing_empty_file"),
             "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",  # hash of empty file
             InputType.CUSTOM,
         ),
         (
-            pytest_cases_fixture_ref("crpatcher_non_existent_file_fixt"),
+            pytest_cases_fixture_ref("fixt_crpatcher_non_existent_file"),
             "",
             InputType.INVALID,
         ),
         (
-            pytest_cases_fixture_ref("crpatcher_existing_empty_dir_fixt"),
+            pytest_cases_fixture_ref("fixt_crpatcher_existing_empty_dir"),
             "",
             InputType.INVALID,
         ),

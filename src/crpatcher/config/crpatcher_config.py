@@ -6,12 +6,15 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field, FilePath, validate_call
+import os
+from typing import Self
+
+from pydantic import BaseModel, Field, FilePath, model_validator, validate_call
 
 from crpatcher.base import CRPATCHER_STRICT_CONFIG
 from crpatcher.config.patch_file_option import PatchFileOption
 from crpatcher.config.patch_request import PatchRequest
-from crpatcher.config.patchinfo_file_option import PatchInfoOption
+from crpatcher.config.patchinfo_file_option import PatchInfoFileOption
 from crpatcher.config.program_context import ProgramContext
 
 __all__ = [
@@ -24,12 +27,6 @@ class CRPatcherConfig(BaseModel):
 
     requests: list[PatchRequest] = Field(
         default_factory=list,
-    )
-    patchinfo_file_opt: PatchInfoOption = Field(
-        default_factory=PatchInfoOption,
-    )
-    patch_file_opt: PatchFileOption = Field(
-        default_factory=PatchFileOption,
     )
 
     @staticmethod
