@@ -14,32 +14,32 @@ from tests.base.pytest_cases import pytest_cases_parametrize
 
 
 @pytest_cases_parametrize(
-    "version",
-    [
+    argnames="version",
+    argvalues=[
         Input[int](),
         Input[int](data=2, type=InputType.CUSTOM),
         Input[int](data=0, type=InputType.INVALID),
         Input[int](data=-1, type=InputType.INVALID),
     ],
-    idgen=Input.idgen_for_input_parametrize(int),
+    idgen=Input.idgen_use_input_type(),
 )
 @pytest_cases_parametrize(
-    "encoding",
-    [
+    argnames="encoding",
+    argvalues=[
         Input[str](),
         Input[str](data="ascii", type=InputType.CUSTOM),
         Input[str](data="invalid_encoding", type=InputType.INVALID),
     ],
-    idgen=Input.idgen_for_input_parametrize(str),
+    idgen=Input.idgen_use_input_type(),
 )
 @pytest_cases_parametrize(
-    "ext",
-    [
+    argnames="ext",
+    argvalues=[
         Input[str](),
         Input[str](data="custom_info", type=InputType.CUSTOM),
         Input[str](data="invalid$ext", type=InputType.INVALID),
     ],
-    idgen=Input.idgen_for_input_parametrize(str),
+    idgen=Input.idgen_use_input_type(),
 )
 def test_patchinfo_file_option(
     version: Input[int],

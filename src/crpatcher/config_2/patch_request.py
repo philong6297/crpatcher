@@ -36,10 +36,8 @@ class PatchRequest(BaseModel):
     def ignore_pattern_matcher(self) -> PathSpec | None:
         if not self.ignore_patterns:
             return None
-        try:
-            return PathSpec.from_lines(GitWildMatchPattern, self.ignore_patterns)
-        except Exception as e:
-            raise ValueError("TODO(longlp): add error message") from e
+        # unfortunatelly, PathSpec.from_lines() wont raise error with invalid patterns
+        return PathSpec.from_lines(GitWildMatchPattern, self.ignore_patterns)
 
     @staticmethod
     def create_with_context(
@@ -78,16 +76,9 @@ class PatchRequest(BaseModel):
     @classmethod
     def _validate_keep_patch_files(cls, v: list[str]) -> list[str]:
         for file_name in v:
-            if not is_filename_only(Path(file_name)):
+            if not is_filename_only(file_name):
                 raise ValueError(
                     f'Invalid file name when validating keep_patch_files: "{file_name}".'
                     f"Only file name is allowed, not path"
                 )
-        return v
-
-    @field_validator("ignore_patterns", mode="after")
-    @classmethod
-    def _validate_ignore_patterns(cls, v: list[str]) -> list[str]:
-        # call to property to trigger the validation since we are building matcher from ignore_patterns
-        cls.ignore_pattern_matcher
         return v

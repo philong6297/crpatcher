@@ -34,12 +34,12 @@ class Input(BaseModel, Generic[T]):
     )
 
     @staticmethod
-    def idgen_for_input_parametrize(expected_type: Type[Any]) -> Callable[..., str]:
+    def idgen_use_input_type() -> Callable[..., str]:
         def _implement(**kwargs: dict[str, Any]) -> str:
             if len(kwargs) != 1:
                 raise ValueError(
                     "Invalid **kwargs. "
-                    f"This function is only intended to use with @parametrize(`name`, list[Input[{expected_type.__name__}]])."
+                    f"This function is only intended to use with @parametrize(`name`, list[Input])."
                     f"Actual: {kwargs}. len = {len(kwargs)}"
                 )
 
@@ -48,17 +48,8 @@ class Input(BaseModel, Generic[T]):
             if not isinstance(input, Input):
                 raise ValueError(
                     "Invalid value type."
-                    f"This function is only intended to use with @parametrize(`name`, list[Input[{expected_type.__name__}]])."
+                    f"This function is only intended to use with @parametrize(`name`, list[Input])."
                     f"Actual: {type(input)}"
-                )
-
-            casted_data = cast(Any, input.data)  # type: ignore
-
-            if not isinstance(casted_data, (expected_type, NoValue)):
-                raise ValueError(
-                    "Invalid data type."
-                    f"This function is only intended to use with @parametrize(`name`, list[Input[{expected_type.__name__}]])."
-                    f"Actual: {type(casted_data).__name__}"
                 )
 
             return f"({name}={input.type.name})"

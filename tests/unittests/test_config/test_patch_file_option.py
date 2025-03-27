@@ -22,7 +22,7 @@ from tests.base.pytest_cases import pytest_cases_parametrize
         Input[str](data="under-score", type=InputType.CUSTOM),
         Input[str](data="invalid+sep", type=InputType.INVALID),
     ),
-    idgen=Input.idgen_for_input_parametrize(str),
+    idgen=Input.idgen_use_input_type(),
 )
 @pytest_cases_parametrize(
     argnames="encoding",
@@ -31,7 +31,7 @@ from tests.base.pytest_cases import pytest_cases_parametrize
         Input[str](data="ascii", type=InputType.CUSTOM),
         Input[str](data="invalid_encoding", type=InputType.INVALID),
     ),
-    idgen=Input.idgen_for_input_parametrize(str),
+    idgen=Input.idgen_use_input_type(),
 )
 @pytest_cases_parametrize(
     argnames="ext",
@@ -40,7 +40,7 @@ from tests.base.pytest_cases import pytest_cases_parametrize
         Input[str](data="custom_patch", type=InputType.CUSTOM),
         Input[str](data="invalid-ext", type=InputType.INVALID),
     ),
-    idgen=Input.idgen_for_input_parametrize(str),
+    idgen=Input.idgen_use_input_type(),
 )
 def test_patch_file_option(
     ext: Input[str],

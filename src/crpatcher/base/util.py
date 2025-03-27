@@ -7,8 +7,8 @@ from __future__ import annotations
 import codecs
 import hashlib
 import logging
-from pathlib import Path
-from typing import Annotated
+import os
+import re
 
 from pydantic import ConfigDict, Field, FilePath, validate_call
 
@@ -41,10 +41,25 @@ def exists_encoding(enc: str) -> bool:
     return True
 
 
-def is_filename_only(path: Path) -> bool:
-    return (
-        not path.parent or path.parent == Path(".")
-    ) and path.name == path.as_posix()
+def is_filename_only(path_str: str) -> bool:
+    # early stop
+    if "/" in path_str or "\\" in path_str:
+        return False
+    pattern = (
+        (
+            r"^(?!^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\..*)?$)"  # Reserved names
+            r'[^<>:"/\\|?*\x00-\x1F]+'  # Disallowed chars
+            r'[^<>:"/\\|?*\x00-\x1F .]$'  # No trailing space/dot
+        )  # Windows
+        if os.name == "nt"
+        else (
+            r"^(?![.]{1,2}$)"  # Not "." or ".."
+            r"[^/\x00]+"  # Disallow slash and null byte
+            r"[^/\x00 ]$"  # No trailing space
+        )  # POSIX
+    )
+
+    return re.match(pattern, path_str, re.IGNORECASE) is not None
 
 
 @validate_call(

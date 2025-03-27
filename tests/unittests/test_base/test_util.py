@@ -28,8 +28,8 @@ def existing_file_with_content_fixt(fixt_crpatcher_base_dir: Path) -> Path:
 
 
 @pytest_cases_parametrize(
-    "path,expected_checksum,type",
-    [
+    argnames="path,expected_checksum,type",
+    argvalues=[
         (
             pytest_cases_fixture_ref("fixt_crpatcher_existing_empty_file"),
             "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",  # hash of empty file
@@ -54,13 +54,13 @@ def existing_file_with_content_fixt(fixt_crpatcher_base_dir: Path) -> Path:
     idgen=lambda **args: f"(type={args['type'].name})-(path={args['path']})",  # type: ignore
 )
 @pytest_cases_parametrize(
-    "buffer_size_input",
-    [
+    argnames="buffer_size_input",
+    argvalues=[
         Input[int](),  #  default
         Input(data=1024, type=InputType.CUSTOM),
         Input(data=0, type=InputType.INVALID),  # invalid, must be >= 1
     ],
-    idgen=Input.idgen_for_input_parametrize(int),
+    idgen=Input.idgen_use_input_type(),
 )
 def test_calculate_file_checksum_sha256(
     buffer_size_input: Input[int], path: Path, expected_checksum: str, type: InputType
@@ -91,10 +91,14 @@ def test_exists_encoding():
 
 
 def test_is_filename_only():
-    assert is_filename_only(Path("file.txt"))
+    assert is_filename_only("file.txt")
+    assert is_filename_only("my_document")
+    assert is_filename_only(".hidden")
 
-    assert not is_filename_only(Path("subdir/file.txt"))
-
-    assert not is_filename_only(Path("/etc/passwd"))
-
-    assert is_filename_only(Path("just_a_name"))
+    assert not is_filename_only("subdir/file.txt")
+    assert not is_filename_only("subdir/")
+    assert not is_filename_only("/etc/passwd")
+    assert not is_filename_only("report?.doc")  # contains ?
+    assert not is_filename_only("CON")  # reserved
+    assert not is_filename_only("readme.")  # ends with dot
+    assert not is_filename_only("   ")  # just spaces

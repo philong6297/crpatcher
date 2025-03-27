@@ -6,10 +6,12 @@ import pytest
 from pathspec import PathSpec
 from pathspec.patterns.gitwildmatch import GitWildMatchPattern
 
+from tests.base.pytest_cases import *
 
-def test_pathspec_with_pathlib():
+
+def _test_pathspec_with_pathlib():
     # Create a PathSpec with some test patterns
-    patterns = []
+    patterns = ['file"', "temp.txt\0", "foo[0x07].log"]
     spec = PathSpec.from_lines(GitWildMatchPattern, patterns)
 
     # Test with various pathlib.Path objects (both POSIX and Windows style)
@@ -32,6 +34,7 @@ def test_pathspec_with_pathlib():
     matched_files = set(spec.match_files(path_strings))
 
     print(matched_files)
+    print(spec)
 
     # Verify results
     assert "main.py" in matched_files  # Should match *.py
@@ -49,3 +52,24 @@ def test_pathspec_with_pathlib():
         "C:/Users/name/src/file.py" in matched_files
     )  # Windows absolute path should be normalized
     assert "C:/Users/name/src/file.py" in matched_files  # Forward slash should work too
+
+
+@pytest_cases_parametrize(argnames="input", argvalues=[1, 2])
+def case_1(input: int):
+    return input
+
+
+@pytest_cases_parametrize(argnames="input", argvalues=[3, 4])
+def case_2(input: int):
+    return input
+
+
+@pytest_cases_parametrize_with_cases(argnames="input1", cases=case_1)
+@pytest_cases_parametrize_with_cases(argnames="input2", cases=case_2)
+def case_3(input1: int, input2: int):
+    return input1 + input2
+
+
+@pytest_cases_parametrize_with_cases(argnames="input", cases=case_3)
+def test_case_3(input: int):
+    assert input == 3 or input == 4

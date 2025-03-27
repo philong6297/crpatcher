@@ -28,6 +28,7 @@ _IDGEN = object()
 
 
 def pytest_cases_parametrize(
+    *,
     argnames: Any = None,
     argvalues: Any = None,
     indirect: Any = False,
@@ -60,6 +61,7 @@ def pytest_cases_parametrize(
 
 # @_lib_function_decorator
 def pytest_cases_fixture(
+    *,
     scope: Any = "function",
     autouse: Any = False,
     name: Any = None,
@@ -83,6 +85,7 @@ CASE_PREFIX_FUN = "case_"
 
 
 def pytest_cases_parametrize_with_cases(
+    *,
     argnames: Any,
     cases: Any = _LIB_AUTO,
     prefix: Any = CASE_PREFIX_FUN,
@@ -112,6 +115,7 @@ def pytest_cases_parametrize_with_cases(
 
 @_lib_function_decorator
 def pytest_cases_case(
+    *,
     id: Any = None,
     tags: Any = None,
     marks: Any = (),
