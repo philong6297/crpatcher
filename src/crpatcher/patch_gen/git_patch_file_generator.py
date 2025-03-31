@@ -9,10 +9,8 @@ from pathlib import Path
 
 from git import Repo as GitPythonRepo
 from git.exc import GitError as GitPythonError
-from pathspec import PathSpec
-from pathspec.patterns.gitwildmatch import GitWildMatchPattern
 
-from crpatcher.config import PatchFileOption, PatchRequest
+from crpatcher.config import CrPatcherConfig, PatchRequest
 from crpatcher.patch_gen.exception import (
     GitDiffError,
     GitRepoNotFoundError,
@@ -29,37 +27,21 @@ _logger = logging.getLogger(__name__)
 class GitPatchFileGenerator:
     def __init__(
         self,
+        *,
         patch_request: PatchRequest,
-        patch_opt: PatchFileOption,
+        patch_file_extension: str,
+        patch_file_encoding: str,
+        patch_file_name_separator: str,
     ):
-        self._patch_opt = patch_opt
         self._patch_request = patch_request
+        self._patch_file_extension = patch_file_extension
+        self._patch_file_encoding = patch_file_encoding
+        self._patch_file_name_separator = patch_file_name_separator
 
         try:
             self._repo = GitPythonRepo(self._patch_request.repo_dir)
         except GitPythonError as e:
             raise InvalidGitRepoError("TODO(longlp): add error message") from e
-
-        # Validate patch directory requirements
-        # Check for non-files and wrong extensions
-        try:
-            for p in self._patch_request.patch_dir.iterdir():
-                if not p.is_file():
-                    raise PatchDirCreationError(f"TODO(longlp): add error message")
-                if p.suffix != f".{self._patch_opt.ext}":
-                    raise PatchDirCreationError(f"TODO(longlp): add error message")
-        except Exception as e:
-            raise PatchDirCreationError(f"TODO(longlp): add error message") from e
-
-        if not self._patch_request.ignore_patterns:
-            self._ignore_spec = None
-        else:
-            try:
-                self._ignore_spec = PathSpec.from_lines(
-                    GitWildMatchPattern, self._patch_request.ignore_patterns
-                )
-            except Exception as e:
-                raise IgnorePatternError(f"TODO(longlp): add error message") from e
 
     def _write_patch_files(self, modified_absolute_filepaths: list[Path]) -> list[str]:
         # validate that all files are in the repo then generate corresponding patch filenames
@@ -80,19 +62,21 @@ class GitPatchFileGenerator:
                 )  # convert to relative path as we dont need to include the repo dir in the filename
                 .as_posix()  # use posix to get rid of different OS path separators
                 .replace(
-                    "/", self._patch_opt.replacement_separator
+                    "/", self._patch_file_name_separator
                 )  # replace slashes with replacement_separator
             )
             filename = (
                 f"{formatted_name}"
-                f".{self._patch_opt.ext}"  # file extension
+                f".{CrPatcherConfig.PATCH_FILE_EXTENSION}"  # file extension
             )
             patch_file_names.append(filename)
 
         patches_write_done_so_far = 0
         total_patches_to_write = len(modified_absolute_filepaths)
 
-        _logger.info(f"Writing {total_patches_to_write} .{self._patch_opt.ext} files:")
+        _logger.info(
+            f"Writing {total_patches_to_write} .{self._patch_file_extension} files:"
+        )
 
         for modified_file, patch_file_name in zip(
             modified_absolute_filepaths, patch_file_names
@@ -109,7 +93,7 @@ class GitPatchFileGenerator:
             try:
                 patch_file = self._patch_request.patch_dir.joinpath(patch_file_name)
                 patch_file.write_text(
-                    data=patch_content, encoding=self._patch_opt.encoding
+                    data=patch_content, encoding=self._patch_file_encoding
                 )
             except Exception as e:
                 raise PatchWriteError(f"TODO(longlp): add error message") from e
@@ -122,11 +106,13 @@ class GitPatchFileGenerator:
         return patch_file_names
 
     def remove_stale_patch_files(self, updated_patch_filenames: list[str]) -> None:
-        _logger.info(f"Removing stale .{self._patch_opt.ext} files:")
+        _logger.info(f"Removing stale .{self._patch_file_extension} files:")
 
         existing_patch_files = {
             f.name
-            for f in self._patch_request.patch_dir.glob(f"*.{self._patch_opt.ext}")
+            for f in self._patch_request.patch_dir.glob(
+                f"*.{self._patch_file_extension}"
+            )
         }
         patch_files_to_keep = set(
             updated_patch_filenames + self._patch_request.keep_patch_files
@@ -136,7 +122,7 @@ class GitPatchFileGenerator:
         ]
 
         if not to_remove_filenames:
-            _logger.info(f"No stale .{self._patch_opt.ext} files to remove.")
+            _logger.info(f"No stale .{self._patch_file_extension} files to remove.")
             return
 
         remove_count = len(to_remove_filenames)
@@ -168,8 +154,12 @@ class GitPatchFileGenerator:
 
         # 2. Ignore files based on config
         try:
-            if self._ignore_spec is not None:
-                files_to_ignore = self._ignore_spec.match_files(modified_relative_files)
+            if self._patch_request.ignore_pattern_matcher is not None:
+                files_to_ignore = (
+                    self._patch_request.ignore_pattern_matcher.match_files(
+                        modified_relative_files
+                    )
+                )
                 for file in files_to_ignore:
                     modified_relative_files.discard(Path(file))
         except Exception as e:

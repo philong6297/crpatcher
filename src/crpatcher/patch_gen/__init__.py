@@ -13,13 +13,10 @@ from crpatcher.patch_gen.exception import (
     StalePatchRemovalError,
 )
 from crpatcher.patch_gen.git_patch_file_generator import GitPatchFileGenerator
-from crpatcher.patch_gen.util import run_git_diff
 
 __all__ = [
     # git_patch_file_generator.py
     "GitPatchFileGenerator",
-    # util.py
-    "run_git_diff",
     # exception.py
     "PatchGenError",
     "GitRepoNotFoundError",

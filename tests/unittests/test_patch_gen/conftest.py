@@ -4,4 +4,3 @@
 
 # pyright: reportUnusedImport=false
 
-from tests.unittests.test_patch_gen.conftest_fixtures import git_repo_dir_fixt

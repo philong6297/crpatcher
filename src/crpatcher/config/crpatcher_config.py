@@ -2,6 +2,8 @@
 # Use of this source code is governed by a MIT license that can be
 # found in the LICENSE file.
 
+from functools import cached_property
+
 from pydantic import BaseModel, Field, FilePath, validate_call
 
 from crpatcher.base import CRPATCHER_STRICT_CONFIG
@@ -14,27 +16,27 @@ class CrPatcherConfig(BaseModel):
 
     requests: list[PatchRequest] = Field(default_factory=list)
 
-    @classmethod
+    @cached_property
     def PATCH_FILE_EXTENSION(cls) -> str:
         return "patch"
 
-    @classmethod
+    @cached_property
     def PATCH_FILE_ENCODING(cls) -> str:
         return "utf-8"
 
-    @classmethod
+    @cached_property
     def PATCH_FILE_NAME_SEPARATOR(cls) -> str:
         return "-"
 
-    @classmethod
+    @cached_property
     def PATCHINFO_FILE_EXTENSION(cls) -> str:
         return "patchinfo"
 
-    @classmethod
+    @cached_property
     def PATCHINFO_FILE_ENCODING(cls) -> str:
         return "utf-8"
 
-    @classmethod
+    @cached_property
     def PATCHINFO_FILE_VERSION(cls) -> int:
         return 1
 
