@@ -9,7 +9,7 @@ import pytest
 from pydantic import ValidationError
 
 from crpatcher.config_2 import ProgramContext
-from tests.base.input_data import Input, InputType
+from tests.base.input_data import InputType
 from tests.base.pytest_cases import pytest_cases_fixture_ref, pytest_cases_parametrize
 
 

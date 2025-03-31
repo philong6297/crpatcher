@@ -12,6 +12,8 @@ from pytest_cases import AUTO as _LIB_AUTO
 from pytest_cases import case as _lib_case
 from pytest_cases import fixture as _lib_fixture
 from pytest_cases import fixture_ref as pytest_cases_fixture_ref
+from pytest_cases import param_fixture as _lib_param_fixture
+from pytest_cases import param_fixtures as _lib_param_fixtures
 from pytest_cases import parametrize as _lib_parametrize
 from pytest_cases import parametrize_with_cases as _lib_parametrize_with_cases
 
@@ -21,6 +23,8 @@ __all__ = [
     "pytest_cases_parametrize_with_cases",
     "pytest_cases_case",
     "pytest_cases_fixture_ref",
+    "pytest_cases_param_fixture",
+    "pytest_cases_param_fixtures",
 ]
 
 
@@ -59,7 +63,6 @@ def pytest_cases_parametrize(
     )
 
 
-# @_lib_function_decorator
 def pytest_cases_fixture(
     *,
     scope: Any = "function",
@@ -113,7 +116,6 @@ def pytest_cases_parametrize_with_cases(
     )
 
 
-@_lib_function_decorator
 def pytest_cases_case(
     *,
     id: Any = None,
@@ -126,4 +128,50 @@ def pytest_cases_case(
         tags=tags,
         marks=marks,
         case_func=case_func,
+    )
+
+
+def pytest_cases_param_fixture(
+    *,
+    argname: Any,
+    argvalues: Any,
+    autouse: Any = False,
+    ids: Any = None,
+    scope: Any = "function",
+    hook: Any = None,
+    debug: Any = False,
+    **kwargs: Any,
+) -> Callable[..., Any]:
+    return _lib_param_fixture(
+        argname=argname,
+        argvalues=argvalues,
+        autouse=autouse,
+        ids=ids,
+        scope=scope,
+        hook=hook,
+        debug=debug,
+        **kwargs,
+    )
+
+
+def pytest_cases_param_fixtures(
+    *,
+    argnames: Any,
+    argvalues: Any,
+    autouse: Any = False,
+    ids: Any = None,
+    scope: Any = "function",
+    hook: Any = None,
+    debug: Any = False,
+    **kwargs: Any,
+) -> Callable[..., Any] | list[Any]:
+    return _lib_param_fixtures(
+        argnames=argnames,
+        argvalues=argvalues,
+        autouse=autouse,
+        ids=ids,
+        scope=scope,
+        hook=hook,
+        debug=debug,
+        **kwargs,
     )
