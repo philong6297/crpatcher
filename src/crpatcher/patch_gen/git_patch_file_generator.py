@@ -43,6 +43,18 @@ class GitPatchFileGenerator:
         except GitPythonError as e:
             raise InvalidGitRepoError("TODO(longlp): add error message") from e
 
+    def update_patches(self) -> None:
+        _logger.info(
+            f"Updating patches for {self._patch_request.repo_dir}, saving to {self._patch_request.patch_dir}:"
+        )
+
+        # 1. Get all modified files in the repo
+        modified_files = self._get_modified_absolute_filepaths()
+        # 2. Write patch files
+        patch_files = self._write_patch_files(modified_files)
+        # 3. Remove stale patch files
+        self.remove_stale_patch_files(patch_files)
+
     def _write_patch_files(self, modified_absolute_filepaths: list[Path]) -> list[str]:
         # validate that all files are in the repo then generate corresponding patch filenames
         patch_file_names: list[str] = []
@@ -91,7 +103,7 @@ class GitPatchFileGenerator:
                 ],
             )
             try:
-                patch_file = self._patch_request.patch_dir.joinpath(patch_file_name)
+                patch_file = self._patch_request.patch_dir / patch_file_name
                 patch_file.write_text(
                     data=patch_content, encoding=self._patch_file_encoding
                 )
@@ -145,7 +157,7 @@ class GitPatchFileGenerator:
             ],
         )
         modified_relative_files = {
-            self._patch_request.repo_dir.joinpath(stripped).resolve(
+            (self._patch_request.repo_dir / stripped).resolve(
                 strict=True,  # Raise OSError if cannot resolve. TODO(longlp): catch this
             )  # Convert to absolute to be friendly with step 2
             for line in cmd_output.splitlines()
@@ -172,15 +184,3 @@ class GitPatchFileGenerator:
             return self._repo.git.diff(*args)
         except Exception as e:
             raise GitDiffError(f"Failed to run git diff with args {args}: {e}") from e
-
-    def update_patches(self) -> None:
-        _logger.info(
-            f"Updating patches for {self._patch_request.repo_dir}, saving to {self._patch_request.patch_dir}:"
-        )
-
-        # 1. Get all modified files in the repo
-        modified_files = self._get_modified_absolute_filepaths()
-        # 2. Write patch files
-        patch_files = self._write_patch_files(modified_files)
-        # 3. Remove stale patch files
-        self.remove_stale_patch_files(patch_files)

@@ -65,7 +65,7 @@ class PatchRequest(BaseModel):
             raise ValueError(f'Unable to resolve "{dir_field.as_posix()}"')
 
         try:
-            resolved_dir = base_dir.joinpath(dir_field).resolve(strict=True)
+            resolved_dir = (base_dir / dir_field).resolve(strict=True)
         except OSError as e:
             raise ValueError(
                 f'Cannot resolve directory "{dir_field.as_posix()}".{os.linesep}Error: {e}'

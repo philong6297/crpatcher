@@ -9,21 +9,21 @@ import pytest
 
 @pytest.fixture(scope="class")
 def fixt_crpatcher_base_dir(tmp_path_factory: pytest.TempPathFactory) -> Path:
-    dir = tmp_path_factory.getbasetemp().joinpath("fixt_crpatcher_base_dir").absolute()
+    dir = (tmp_path_factory.getbasetemp() / "fixt_crpatcher_base_dir").absolute()
     dir.mkdir(parents=True, exist_ok=True)
     return dir
 
 
 @pytest.fixture(scope="class")
 def fixt_crpatcher_existing_empty_dir(fixt_crpatcher_base_dir: Path) -> Path:
-    dir = fixt_crpatcher_base_dir.joinpath("existing_dir").absolute()
+    dir = (fixt_crpatcher_base_dir / "existing_dir").absolute()
     dir.mkdir(parents=True, exist_ok=True)
     return dir
 
 
 @pytest.fixture(scope="class")
 def fixt_crpatcher_non_existent_dir(fixt_crpatcher_base_dir: Path) -> Path:
-    dir = fixt_crpatcher_base_dir.joinpath("non_existent_dir").absolute()
+    dir = (fixt_crpatcher_base_dir / "non_existent_dir").absolute()
     if dir.exists():
         raise FileExistsError(f"fixt_crpatcher_non_existent_dir={dir} already exists")
     return dir
@@ -31,7 +31,7 @@ def fixt_crpatcher_non_existent_dir(fixt_crpatcher_base_dir: Path) -> Path:
 
 @pytest.fixture(scope="class")
 def fixt_crpatcher_existing_empty_file(fixt_crpatcher_base_dir: Path) -> Path:
-    file = fixt_crpatcher_base_dir.joinpath("temp_file.txt").absolute()
+    file = (fixt_crpatcher_base_dir / "temp_file.txt").absolute()
     if not file.exists():
         file.touch()
     if not file.is_file():
@@ -43,7 +43,7 @@ def fixt_crpatcher_existing_empty_file(fixt_crpatcher_base_dir: Path) -> Path:
 
 @pytest.fixture(scope="class")
 def fixt_crpatcher_non_existent_file(fixt_crpatcher_base_dir: Path) -> Path:
-    file = fixt_crpatcher_base_dir.joinpath("non_existent_file.txt").absolute()
+    file = (fixt_crpatcher_base_dir / "non_existent_file.txt").absolute()
     if file.is_file():
         raise FileExistsError(f"fixt_crpatcher_non_existent_file={file} already exists")
     return file

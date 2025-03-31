@@ -18,7 +18,7 @@ from tests.base.pytest_cases import *
 
 @pytest.fixture(scope="class")
 def existing_file_with_content_fixt(fixt_crpatcher_base_dir: Path) -> Path:
-    file = fixt_crpatcher_base_dir.joinpath("hello_world.txt").absolute()
+    file = (fixt_crpatcher_base_dir / "hello_world.txt").absolute()
     if not file.exists():
         file.touch()
     if not file.is_file():

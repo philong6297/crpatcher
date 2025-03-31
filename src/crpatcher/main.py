@@ -8,17 +8,15 @@ import sys
 from pathlib import Path
 
 from crpatcher.command_generate_patches import command_generate_patches
-from crpatcher.config import CRPatcherConfig
+from crpatcher.config import CrPatcherConfig
 
 _logger = logging.getLogger(__name__)
 
 
-def _init_config(args: argparse.Namespace) -> CRPatcherConfig:
-    config_file = (
-        args.config_file if args.config_file else Path.cwd().joinpath(".crpatcher")
-    )
+def _init_config(args: argparse.Namespace) -> CrPatcherConfig:
+    config_file = args.config_file if args.config_file else Path.cwd() / ".crpatcher"
 
-    return CRPatcherConfig.create_from_config_file(config_file)
+    return CrPatcherConfig.create_from_config_file(config_file)
 
 
 def _setup_print_report(args: argparse.Namespace) -> None:

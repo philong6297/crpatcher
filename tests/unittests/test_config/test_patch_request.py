@@ -151,16 +151,14 @@ def test_construction_with_program_context(
             expected_repo_dir = (
                 test_case.repo_dir.safe_data.path
                 if test_case.repo_dir.safe_data.use_absolute_path
-                else test_case.repo_dir.safe_data.base_dir.joinpath(
-                    test_case.repo_dir.safe_data.path
-                )
+                else test_case.repo_dir.safe_data.base_dir
+                / test_case.repo_dir.safe_data.path
             )
             expected_patch_dir = (
                 test_case.patch_dir.safe_data.path
                 if test_case.patch_dir.safe_data.use_absolute_path
-                else test_case.patch_dir.safe_data.base_dir.joinpath(
-                    test_case.patch_dir.safe_data.path
-                )
+                else test_case.patch_dir.safe_data.base_dir
+                / test_case.patch_dir.safe_data.path
             )
 
             assert actual_result.repo_dir == expected_repo_dir
