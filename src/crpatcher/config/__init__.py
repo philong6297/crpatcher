@@ -2,16 +2,8 @@
 # Use of this source code is governed by a MIT license that can be
 # found in the LICENSE file.
 
-from crpatcher.config.crpatcher_config import CRPatcherConfig
-from crpatcher.config.patch_file_option import PatchFileOption
+from crpatcher.config.crpatcher_config import CrPatcherConfig
 from crpatcher.config.patch_request import PatchRequest
-from crpatcher.config.patchinfo_file_option import PatchInfoFileOption
 from crpatcher.config.program_context import ProgramContext
 
-__all__ = [
-    "CRPatcherConfig",
-    "PatchInfoFileOption",
-    "PatchFileOption",
-    "PatchRequest",
-    "ProgramContext",
-]
+__all__ = ["PatchRequest", "ProgramContext", "CrPatcherConfig"]

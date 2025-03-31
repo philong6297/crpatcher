@@ -8,12 +8,12 @@ import itertools
 from functools import cached_property
 from pathlib import Path
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from crpatcher.base.util import CRPATCHER_STRICT_CONFIG
-from crpatcher.config_2 import ProgramContext
+from crpatcher.config import ProgramContext
 from tests.base.input_data import Input, InputType
-from tests.unittests.test_config_2.helper import PathData, RequestTestInput
+from tests.unittests.test_config.helper import PathData, RequestTestInput
 
 
 class _ArgBuilder(BaseModel):
@@ -35,9 +35,8 @@ class _ArgBuilder(BaseModel):
             for is_existing_path, use_absolute_path in self.REPO_DIR_ARGVALUES
         ]
 
-    @classmethod
     def build_repo_dir(
-        cls,
+        self,
         *,
         use_valid_path: bool,
         use_absolute_path: bool,
@@ -69,9 +68,8 @@ class _ArgBuilder(BaseModel):
             for is_existing_path, use_absolute_path in self.PATCH_DIR_ARGVALUES
         ]
 
-    @classmethod
     def build_patch_dir(
-        cls,
+        self,
         *,
         use_valid_path: bool,
         use_absolute_path: bool,
@@ -108,8 +106,7 @@ class _ArgBuilder(BaseModel):
             ]
         ]
 
-    @classmethod
-    def build_ignore_patterns(cls, input: Input[list[str]]):
+    def build_ignore_patterns(self, input: Input[list[str]]):
         return input
 
     @cached_property
@@ -124,8 +121,7 @@ class _ArgBuilder(BaseModel):
     def KEEP_PATCH_FILES_IDS(self) -> list[str]:
         return [f"{input.type.name}" for input in self.KEEP_PATCH_FILES_ARGVALUES]
 
-    @classmethod
-    def build_keep_patch_files(cls, input: Input[list[str]]):
+    def build_keep_patch_files(self, input: Input[list[str]]):
         return input
 
     @cached_property
@@ -142,9 +138,8 @@ class _ArgBuilder(BaseModel):
             for has_context in self.PROGRAM_CONTEXT_ARGVALUES
         ]
 
-    @classmethod
     def build_program_context(
-        cls, *, has_context: bool, file: Path
+        self, *, has_context: bool, file: Path
     ) -> Input[ProgramContext | None]:
         if has_context:
             return Input(
@@ -153,6 +148,87 @@ class _ArgBuilder(BaseModel):
             )
 
         return Input(data=None, type=InputType.CUSTOM)  # no validation context
+
+    def build_all_requests(
+        self,
+        *,
+        existing_empty_file: Path,
+        existing_empty_dir: Path,
+        non_existent_dir: Path,
+        base_dir: Path,
+    ) -> list[RequestTestInput]:
+        return [
+            self.build_request_test_input(
+                repo_dir_arg=repo_dir_arg,
+                patch_dir_arg=patch_dir_arg,
+                ignore_patterns_arg=ignore_patterns_arg,
+                keep_patch_files_arg=keep_patch_files_arg,
+                program_context_arg=program_context_arg,
+                existing_empty_file=existing_empty_file,
+                existing_empty_dir=existing_empty_dir,
+                non_existent_dir=non_existent_dir,
+                base_dir=base_dir,
+            )
+            for (
+                repo_dir_arg,
+                patch_dir_arg,
+                ignore_patterns_arg,
+                keep_patch_files_arg,
+                program_context_arg,
+            ) in itertools.product(
+                self.REPO_DIR_ARGVALUES,
+                self.PATCH_DIR_ARGVALUES,
+                self.IGNORE_PATTERNS_ARGVALUES,
+                self.KEEP_PATCH_FILES_ARGVALUES,
+                self.PROGRAM_CONTEXT_ARGVALUES,
+            )
+        ]
+
+    def build_request_test_input(
+        self,
+        *,
+        repo_dir_arg: tuple[bool, bool],
+        patch_dir_arg: tuple[bool, bool],
+        ignore_patterns_arg: Input[list[str]],
+        keep_patch_files_arg: Input[list[str]],
+        program_context_arg: bool,
+        existing_empty_file: Path,
+        existing_empty_dir: Path,
+        non_existent_dir: Path,
+        base_dir: Path,
+    ) -> RequestTestInput:
+        repo_dir = self.build_repo_dir(
+            use_valid_path=repo_dir_arg[0],
+            use_absolute_path=repo_dir_arg[1],
+            existing_empty_dir=existing_empty_dir,
+            non_existent_dir=non_existent_dir,
+            base_dir=base_dir,
+        )
+
+        patch_dir = self.build_patch_dir(
+            use_valid_path=patch_dir_arg[0],
+            use_absolute_path=patch_dir_arg[1],
+            existing_empty_dir=existing_empty_dir,
+            non_existent_dir=non_existent_dir,
+            base_dir=base_dir,
+        )
+
+        ignore_patterns = self.build_ignore_patterns(ignore_patterns_arg)
+
+        keep_patch_files = self.build_keep_patch_files(keep_patch_files_arg)
+
+        program_context = self.build_program_context(
+            has_context=program_context_arg,
+            file=existing_empty_file,
+        )
+
+        return RequestTestInput(
+            repo_dir=repo_dir,
+            patch_dir=patch_dir,
+            ignore_patterns=ignore_patterns,
+            keep_patch_files=keep_patch_files,
+            program_context=program_context,
+        )
 
 
 def _make_dir_data(

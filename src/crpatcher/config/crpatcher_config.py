@@ -2,32 +2,41 @@
 # Use of this source code is governed by a MIT license that can be
 # found in the LICENSE file.
 
-# TODO: Add docstring and description for all fields
-
-from __future__ import annotations
-
-import os
-from typing import Self
-
-from pydantic import BaseModel, Field, FilePath, model_validator, validate_call
+from pydantic import BaseModel, Field, FilePath, validate_call
 
 from crpatcher.base import CRPATCHER_STRICT_CONFIG
-from crpatcher.config.patch_file_option import PatchFileOption
 from crpatcher.config.patch_request import PatchRequest
-from crpatcher.config.patchinfo_file_option import PatchInfoFileOption
 from crpatcher.config.program_context import ProgramContext
 
-__all__ = [
-    "CRPatcherConfig",
-]
 
-
-class CRPatcherConfig(BaseModel):
+class CrPatcherConfig(BaseModel):
     model_config = CRPATCHER_STRICT_CONFIG()
 
-    requests: list[PatchRequest] = Field(
-        default_factory=list,
-    )
+    requests: list[PatchRequest] = Field(default_factory=list)
+
+    @classmethod
+    def PATCH_FILE_EXTENSION(cls) -> str:
+        return "patch"
+
+    @classmethod
+    def PATCH_FILE_ENCODING(cls) -> str:
+        return "utf-8"
+
+    @classmethod
+    def PATCH_FILE_NAME_SEPARATOR(cls) -> str:
+        return "-"
+
+    @classmethod
+    def PATCHINFO_FILE_EXTENSION(cls) -> str:
+        return "patchinfo"
+
+    @classmethod
+    def PATCHINFO_FILE_ENCODING(cls) -> str:
+        return "utf-8"
+
+    @classmethod
+    def PATCHINFO_FILE_VERSION(cls) -> int:
+        return 1
 
     @staticmethod
     @validate_call(
@@ -40,4 +49,4 @@ class CRPatcherConfig(BaseModel):
         json_data = config_file.read_bytes()
 
         program_context = ProgramContext(config_file=config_file)
-        return CRPatcherConfig.model_validate_json(json_data, context=program_context)
+        return CrPatcherConfig.model_validate_json(json_data, context=program_context)

@@ -9,42 +9,34 @@ import pytest
 from pydantic import ValidationError
 
 from crpatcher.config import ProgramContext
-from tests.base.input_data import Input, InputType
-from tests.base.pytest_cases import pytest_cases_parametrize_with_cases
+from tests.base.input_data import InputType
+from tests.base.pytest_cases import pytest_cases_fixture_ref, pytest_cases_parametrize
 
 
-class ConfigFileTestCases:
-    def case_valid_use_existing_file(
-        self, fixt_crpatcher_existing_empty_file: Path
-    ) -> Input[Path]:
-        return Input(
-            data=fixt_crpatcher_existing_empty_file, type=InputType.CUSTOM
-        )  # Valid file
-
-    def case_invalid_use_directory(
-        self, fixt_crpatcher_existing_empty_dir: Path
-    ) -> Input[Path]:
-        return Input(
-            data=fixt_crpatcher_existing_empty_dir, type=InputType.INVALID
-        )  # Directory instead of file
-
-    def case_invalid_use_non_existent_file(
-        self, fixt_crpatcher_non_existent_file: Path
-    ) -> Input[Path]:
-        return Input(
-            data=fixt_crpatcher_non_existent_file, type=InputType.INVALID
-        )  # Non-existent file
-
-
-@pytest_cases_parametrize_with_cases(
-    "config_file",
-    cases=ConfigFileTestCases,
+@pytest_cases_parametrize(
+    argnames="input_data,input_type",
+    argvalues=[
+        (
+            pytest_cases_fixture_ref("fixt_crpatcher_existing_empty_file"),
+            InputType.CUSTOM,
+        ),  # valid file
+        (
+            pytest_cases_fixture_ref("fixt_crpatcher_non_existent_file"),
+            InputType.INVALID,
+        ),  # invalid, non-existent file
+        (
+            pytest_cases_fixture_ref("fixt_crpatcher_existing_empty_dir"),
+            InputType.INVALID,
+        ),  # invalid, directory
+    ],
+    ids=["valid_file", "invalid_non_existent", "invalid_directory"],
 )
-def test_program_context(config_file: Input[Path]) -> None:
+def test_program_context(input_data: Path, input_type: InputType):
     with (
-        pytest.raises(ValidationError) if config_file.is_invalid_data else nullcontext()
+        pytest.raises(ValidationError)
+        if input_type == InputType.INVALID
+        else nullcontext()
     ):
-        context = ProgramContext(config_file=config_file.safe_data)
-        if not config_file.is_invalid_data:
-            assert context.config_file == config_file.safe_data
-            assert context.config_file.is_file()
+        context = ProgramContext(config_file=input_data)
+        if input_type != InputType.INVALID:
+            assert context.config_file == input_data
