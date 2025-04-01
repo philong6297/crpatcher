@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import json
+import uuid
 from contextlib import nullcontext
 from pathlib import Path
 from typing import Any
@@ -18,7 +19,6 @@ from tests.base.pytest_cases import (
     pytest_cases_fixture,
     pytest_cases_fixture_ref,
     pytest_cases_parametrize,
-    pytest_cases_parametrize_with_cases,
 )
 from tests.unittests.test_config.helper import (
     PatchFileOptionTestInput,
@@ -227,11 +227,7 @@ def _create_config_file(
     requests: Input[list[RequestTestInput]],
     patch_file_option: PatchFileOptionTestInput,
 ) -> Path:
-    filename = (
-        f"requests_{requests.type.name}_"
-        f"patch_file_option_{patch_file_option.get_input_type.name}"
-        ".json"
-    )
+    filename = f"{uuid.uuid4()}.json"
     config_file = base_dir / filename
 
     if config_file.exists():
@@ -279,7 +275,4 @@ def _create_config_file(
     with open(config_file, "w") as f:
         json.dump(data, f)
 
-    return config_file
-    return config_file
-    return config_file
     return config_file
