@@ -14,42 +14,64 @@ from pydantic import ValidationError
 from crpatcher.config import PatchRequest
 from tests.base.input_data import Input, InputType
 from tests.base.pytest_cases import pytest_cases_fixture, pytest_cases_parametrize
-from tests.unittests.test_config.arg_builder import PATCH_REQUEST_ARG_BUILDER
 from tests.unittests.test_config.helper import RequestTestInput
+from tests.unittests.test_config.test_case_builder import (
+    PATCH_REQUEST_TEST_CASE_BUILDER,
+)
+
+
+def _idgen_for_fixt_patch_request(**kwargs: dict[str, Any]) -> str:
+    print(kwargs)
+    repo_dir_id = kwargs["repo_dir_id"]
+    patch_dir_id = kwargs["patch_dir_id"]
+    ignore_patterns_id = kwargs["ignore_patterns_id"]
+    keep_patch_files_id = kwargs["keep_patch_files_id"]
+    program_context_id = kwargs["program_context_id"]
+
+    return (
+        f"(repo_dir=({repo_dir_id}))-"
+        f"(patch_dir=({patch_dir_id}))-"
+        f"(ignore_patterns=({ignore_patterns_id}))-"
+        f"(keep_patch_files=({keep_patch_files_id}))-"
+        f"(program_context=({program_context_id}))"
+    )
 
 
 @pytest_cases_fixture(scope="class")
 @pytest_cases_parametrize(
-    argnames="repo_dir_arg",
-    argvalues=PATCH_REQUEST_ARG_BUILDER.REPO_DIR_ARGVALUES,
-    ids=[f"repo_dir({id})" for id in PATCH_REQUEST_ARG_BUILDER.REPO_DIR_IDS],
-)
-@pytest_cases_parametrize(
-    argnames="patch_dir_arg",
-    argvalues=PATCH_REQUEST_ARG_BUILDER.PATCH_DIR_ARGVALUES,
-    ids=[f"patch_dir({id})" for id in PATCH_REQUEST_ARG_BUILDER.PATCH_DIR_IDS],
-)
-@pytest_cases_parametrize(
-    argnames="ignore_patterns_arg",
-    argvalues=PATCH_REQUEST_ARG_BUILDER.IGNORE_PATTERNS_ARGVALUES,
-    ids=[
-        f"ignore_patterns({id})" for id in PATCH_REQUEST_ARG_BUILDER.IGNORE_PATTERNS_IDS
-    ],
-)
-@pytest_cases_parametrize(
-    argnames="keep_patch_files_arg",
-    argvalues=PATCH_REQUEST_ARG_BUILDER.KEEP_PATCH_FILES_ARGVALUES,
-    ids=[
-        f"keep_patch_files({id})"
-        for id in PATCH_REQUEST_ARG_BUILDER.KEEP_PATCH_FILES_IDS
-    ],
-)
-@pytest_cases_parametrize(
-    argnames="program_context_arg",
-    argvalues=PATCH_REQUEST_ARG_BUILDER.PROGRAM_CONTEXT_ARGVALUES,
-    ids=[
-        f"program_context({id})" for id in PATCH_REQUEST_ARG_BUILDER.PROGRAM_CONTEXT_IDS
-    ],
+    idgen=_idgen_for_fixt_patch_request,
+    **{
+        "repo_dir_arg,repo_dir_id": list(
+            zip(
+                PATCH_REQUEST_TEST_CASE_BUILDER.REPO_DIR_CONSTRUCTION_TEST_CASES,
+                PATCH_REQUEST_TEST_CASE_BUILDER.REPO_DIR_CONSTRUCTION_TEST_CASE_IDS,
+            )
+        ),
+        "patch_dir_arg,patch_dir_id": list(
+            zip(
+                PATCH_REQUEST_TEST_CASE_BUILDER.PATCH_DIR_CONSTRUCTION_TEST_CASES,
+                PATCH_REQUEST_TEST_CASE_BUILDER.PATCH_DIR_CONSTRUCTION_TEST_CASE_IDS,
+            )
+        ),
+        "ignore_patterns_arg,ignore_patterns_id": list(
+            zip(
+                PATCH_REQUEST_TEST_CASE_BUILDER.IGNORE_PATTERNS_CONSTRUCTION_TEST_CASES,
+                PATCH_REQUEST_TEST_CASE_BUILDER.IGNORE_PATTERNS_CONSTRUCTION_TEST_CASE_IDS,
+            )
+        ),
+        "keep_patch_files_arg,keep_patch_files_id": list(
+            zip(
+                PATCH_REQUEST_TEST_CASE_BUILDER.KEEP_PATCH_FILES_CONSTRUCTION_TEST_CASES,
+                PATCH_REQUEST_TEST_CASE_BUILDER.KEEP_PATCH_FILES_CONSTRUCTION_TEST_CASE_IDS,
+            )
+        ),
+        "program_context_arg,program_context_id": list(
+            zip(
+                PATCH_REQUEST_TEST_CASE_BUILDER.PROGRAM_CONTEXT_CONSTRUCTION_TEST_CASES,
+                PATCH_REQUEST_TEST_CASE_BUILDER.PROGRAM_CONTEXT_CONSTRUCTION_TEST_CASE_IDS,
+            )
+        ),
+    },
 )
 def fixt_patch_request(
     repo_dir_arg: tuple[bool, bool],
@@ -61,8 +83,13 @@ def fixt_patch_request(
     fixt_crpatcher_existing_empty_dir: Path,
     fixt_crpatcher_non_existent_dir: Path,
     fixt_crpatcher_base_dir: Path,
+    repo_dir_id: str,  # unused
+    patch_dir_id: str,  # unused
+    ignore_patterns_id: str,  # unused
+    keep_patch_files_id: str,  # unused
+    program_context_id: str,  # unused
 ) -> RequestTestInput:
-    return PATCH_REQUEST_ARG_BUILDER.build_request_test_input(
+    return PATCH_REQUEST_TEST_CASE_BUILDER.build_request_test_input(
         repo_dir_arg=repo_dir_arg,
         patch_dir_arg=patch_dir_arg,
         ignore_patterns_arg=ignore_patterns_arg,

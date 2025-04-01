@@ -11,34 +11,58 @@ from pydantic import ValidationError
 from crpatcher.config import PatchFileOption
 from tests.base.input_data import Input, InputType
 from tests.base.pytest_cases import pytest_cases_parametrize
-from tests.unittests.test_config.arg_builder import PATCH_FILE_OPTION_ARG_BUILDER
+from tests.unittests.test_config.test_case_builder import (
+    PATCH_FILE_OPTION_TEST_CASE_BUILDER,
+)
+
+
+def _idgen_for_fixt_patch_file_option(**kwargs: dict[str, Any]) -> str:
+    extension_id = kwargs["extension_id"]
+    name_separator_id = kwargs["name_separator_id"]
+    encoding_id = kwargs["encoding_id"]
+
+    return (
+        f"(extension=({extension_id}))-"
+        f"(name_separator=({name_separator_id}))-"
+        f"(encoding=({encoding_id}))"
+    )
 
 
 @pytest_cases_parametrize(
-    argnames="extension",
-    argvalues=PATCH_FILE_OPTION_ARG_BUILDER.EXTENSION_ARGVALUES,
-    ids=[f"(extension={id})" for id in PATCH_FILE_OPTION_ARG_BUILDER.EXTENSION_IDS],
-)
-@pytest_cases_parametrize(
-    argnames="name_separator",
-    argvalues=PATCH_FILE_OPTION_ARG_BUILDER.NAME_SEPARATOR_ARGVALUES,
-    ids=[
-        f"(name_separator={id})"
-        for id in PATCH_FILE_OPTION_ARG_BUILDER.NAME_SEPARATOR_IDS
-    ],
-)
-@pytest_cases_parametrize(
-    argnames="encoding",
-    argvalues=PATCH_FILE_OPTION_ARG_BUILDER.ENCODING_ARGVALUES,
-    ids=[f"(encoding={id})" for id in PATCH_FILE_OPTION_ARG_BUILDER.ENCODING_IDS],
+    idgen=_idgen_for_fixt_patch_file_option,
+    **{
+        "extension_arg,extension_id": list(
+            zip(
+                PATCH_FILE_OPTION_TEST_CASE_BUILDER.EXTENSION_CONSTRUCTION_TEST_CASES,
+                PATCH_FILE_OPTION_TEST_CASE_BUILDER.EXTENSION_CONSTRUCTION_TEST_CASE_IDS,
+            )
+        ),
+        "name_separator_arg,name_separator_id": list(
+            zip(
+                PATCH_FILE_OPTION_TEST_CASE_BUILDER.NAME_SEPARATOR_CONSTRUCTION_TEST_CASES,
+                PATCH_FILE_OPTION_TEST_CASE_BUILDER.NAME_SEPARATOR_CONSTRUCTION_TEST_CASE_IDS,
+            )
+        ),
+        "encoding_arg,encoding_id": list(
+            zip(
+                PATCH_FILE_OPTION_TEST_CASE_BUILDER.ENCODING_CONSTRUCTION_TEST_CASES,
+                PATCH_FILE_OPTION_TEST_CASE_BUILDER.ENCODING_CONSTRUCTION_TEST_CASE_IDS,
+            )
+        ),
+    },
 )
 def test_direct_constructor(
-    extension: Input[str], name_separator: Input[str], encoding: Input[str]
+    extension_arg: Input[str],
+    name_separator_arg: Input[str],
+    encoding_arg: Input[str],
+    extension_id: str,  # unused
+    name_separator_id: str,  # unused
+    encoding_id: str,  # unused
 ):
     should_raise_error = (
-        extension.is_invalid_data
-        or name_separator.is_invalid_data
-        or encoding.is_invalid_data
+        extension_arg.is_invalid_data
+        or name_separator_arg.is_invalid_data
+        or encoding_arg.is_invalid_data
     )
 
     with (
@@ -57,19 +81,21 @@ def test_direct_constructor(
 
         # mimic default value by adding to kwargs first. only set the value if the input is custom
 
-        if extension.type != InputType.DEFAULT:
-            expected["extension"] = extension.safe_data
+        if extension_arg.type != InputType.DEFAULT:
+            expected["extension"] = extension_arg.safe_data
             kwargs["extension"] = expected["extension"]
-        if name_separator.type != InputType.DEFAULT:
-            expected["name_separator"] = name_separator.safe_data
+        if name_separator_arg.type != InputType.DEFAULT:
+            expected["name_separator"] = name_separator_arg.safe_data
             kwargs["name_separator"] = expected["name_separator"]
-        if encoding.type != InputType.DEFAULT:
-            expected["encoding"] = encoding.safe_data
+        if encoding_arg.type != InputType.DEFAULT:
+            expected["encoding"] = encoding_arg.safe_data
             kwargs["encoding"] = expected["encoding"]
 
         actual = PatchFileOption(**kwargs)
 
         if not should_raise_error:
             assert actual.extension == expected["extension"]
+            assert actual.name_separator == expected["name_separator"]
+            assert actual.encoding == expected["encoding"]
             assert actual.name_separator == expected["name_separator"]
             assert actual.encoding == expected["encoding"]

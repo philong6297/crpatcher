@@ -20,11 +20,11 @@ from tests.unittests.test_config.helper import (
 )
 
 
-class _PatchRequestArgBuilder(BaseModel):
+class _PatchRequestTestCaseBuilder(BaseModel):
     model_config = CRPATCHER_STRICT_CONFIG()
 
     @cached_property
-    def REPO_DIR_ARGVALUES(self) -> list[tuple[bool, bool]]:
+    def REPO_DIR_CONSTRUCTION_TEST_CASES(self) -> list[tuple[bool, bool]]:
         return list(
             itertools.product(
                 [True, False],  # is existing path
@@ -33,10 +33,10 @@ class _PatchRequestArgBuilder(BaseModel):
         )
 
     @cached_property
-    def REPO_DIR_IDS(self) -> list[str]:
+    def REPO_DIR_CONSTRUCTION_TEST_CASE_IDS(self) -> list[str]:
         return [
             f"existing_path={is_existing_path};use_absolute_path={use_absolute_path}"
-            for is_existing_path, use_absolute_path in self.REPO_DIR_ARGVALUES
+            for is_existing_path, use_absolute_path in self.REPO_DIR_CONSTRUCTION_TEST_CASES
         ]
 
     def build_repo_dir(
@@ -57,7 +57,7 @@ class _PatchRequestArgBuilder(BaseModel):
         )
 
     @cached_property
-    def PATCH_DIR_ARGVALUES(self) -> list[tuple[bool, bool]]:
+    def PATCH_DIR_CONSTRUCTION_TEST_CASES(self) -> list[tuple[bool, bool]]:
         return list(
             itertools.product(
                 [True, False],  # is existing path
@@ -66,10 +66,10 @@ class _PatchRequestArgBuilder(BaseModel):
         )
 
     @cached_property
-    def PATCH_DIR_IDS(self) -> list[str]:
+    def PATCH_DIR_CONSTRUCTION_TEST_CASE_IDS(self) -> list[str]:
         return [
             f"existing_path={is_existing_path};use_absolute_path={use_absolute_path}"
-            for is_existing_path, use_absolute_path in self.PATCH_DIR_ARGVALUES
+            for is_existing_path, use_absolute_path in self.PATCH_DIR_CONSTRUCTION_TEST_CASES
         ]
 
     def build_patch_dir(
@@ -90,7 +90,7 @@ class _PatchRequestArgBuilder(BaseModel):
         )
 
     @cached_property
-    def IGNORE_PATTERNS_ARGVALUES(self) -> list[Input[list[str]]]:
+    def IGNORE_PATTERNS_CONSTRUCTION_TEST_CASES(self) -> list[Input[list[str]]]:
         return [
             Input(),  # default
             Input(data=["*.txt", "*.log", "*.py", "*.md"], type=InputType.CUSTOM),
@@ -100,7 +100,7 @@ class _PatchRequestArgBuilder(BaseModel):
         ]
 
     @cached_property
-    def IGNORE_PATTERNS_IDS(self) -> list[str]:
+    def IGNORE_PATTERNS_CONSTRUCTION_TEST_CASE_IDS(self) -> list[str]:
         return [
             f"{desc}"
             for desc in [
@@ -114,7 +114,7 @@ class _PatchRequestArgBuilder(BaseModel):
         return input
 
     @cached_property
-    def KEEP_PATCH_FILES_ARGVALUES(self) -> list[Input[list[str]]]:
+    def KEEP_PATCH_FILES_CONSTRUCTION_TEST_CASES(self) -> list[Input[list[str]]]:
         return [
             Input(),
             Input(data=["valid_name", "valid_name.txt"], type=InputType.CUSTOM),
@@ -122,24 +122,27 @@ class _PatchRequestArgBuilder(BaseModel):
         ]
 
     @cached_property
-    def KEEP_PATCH_FILES_IDS(self) -> list[str]:
-        return [f"{input.type.name}" for input in self.KEEP_PATCH_FILES_ARGVALUES]
+    def KEEP_PATCH_FILES_CONSTRUCTION_TEST_CASE_IDS(self) -> list[str]:
+        return [
+            f"{input.type.name}"
+            for input in self.KEEP_PATCH_FILES_CONSTRUCTION_TEST_CASES
+        ]
 
     def build_keep_patch_files(self, input: Input[list[str]]):
         return input
 
     @cached_property
-    def PROGRAM_CONTEXT_ARGVALUES(self) -> list[bool]:
+    def PROGRAM_CONTEXT_CONSTRUCTION_TEST_CASES(self) -> list[bool]:
         return [
             True,  # use context
             False,  # no context
         ]
 
     @cached_property
-    def PROGRAM_CONTEXT_IDS(self) -> list[str]:
+    def PROGRAM_CONTEXT_CONSTRUCTION_TEST_CASE_IDS(self) -> list[str]:
         return [
             f"has_context={has_context}"
-            for has_context in self.PROGRAM_CONTEXT_ARGVALUES
+            for has_context in self.PROGRAM_CONTEXT_CONSTRUCTION_TEST_CASES
         ]
 
     def build_program_context(
@@ -180,11 +183,11 @@ class _PatchRequestArgBuilder(BaseModel):
                 keep_patch_files_arg,
                 program_context_arg,
             ) in itertools.product(
-                self.REPO_DIR_ARGVALUES,
-                self.PATCH_DIR_ARGVALUES,
-                self.IGNORE_PATTERNS_ARGVALUES,
-                self.KEEP_PATCH_FILES_ARGVALUES,
-                self.PROGRAM_CONTEXT_ARGVALUES,
+                self.REPO_DIR_CONSTRUCTION_TEST_CASES,
+                self.PATCH_DIR_CONSTRUCTION_TEST_CASES,
+                self.IGNORE_PATTERNS_CONSTRUCTION_TEST_CASES,
+                self.KEEP_PATCH_FILES_CONSTRUCTION_TEST_CASES,
+                self.PROGRAM_CONTEXT_CONSTRUCTION_TEST_CASES,
             )
         ]
 
@@ -257,11 +260,11 @@ def _make_dir_data(
     )
 
 
-class _PatchFileOptionArgBuilder(BaseModel):
+class _PatchFileOptionTestCaseBuilder(BaseModel):
     model_config = CRPATCHER_STRICT_CONFIG()
 
     @cached_property
-    def EXTENSION_ARGVALUES(self) -> list[Input[str]]:
+    def EXTENSION_CONSTRUCTION_TEST_CASES(self) -> list[Input[str]]:
         return [
             Input(),  # default
             Input(data="patch-1", type=InputType.CUSTOM),
@@ -270,11 +273,11 @@ class _PatchFileOptionArgBuilder(BaseModel):
         ]
 
     @cached_property
-    def EXTENSION_IDS(self) -> list[str]:
+    def EXTENSION_CONSTRUCTION_TEST_CASE_IDS(self) -> list[str]:
         return ["default", "valid", "invalid_empty", "invalid_char"]
 
     @cached_property
-    def NAME_SEPARATOR_ARGVALUES(self) -> list[Input[str]]:
+    def NAME_SEPARATOR_CONSTRUCTION_TEST_CASES(self) -> list[Input[str]]:
         return [
             Input(),  # default
             Input(data="patch-1", type=InputType.CUSTOM),
@@ -283,11 +286,11 @@ class _PatchFileOptionArgBuilder(BaseModel):
         ]
 
     @cached_property
-    def NAME_SEPARATOR_IDS(self) -> list[str]:
+    def NAME_SEPARATOR_CONSTRUCTION_TEST_CASE_IDS(self) -> list[str]:
         return ["default", "valid", "valid_empty", "invalid_char"]
 
     @cached_property
-    def ENCODING_ARGVALUES(self) -> list[Input[str]]:
+    def ENCODING_CONSTRUCTION_TEST_CASES(self) -> list[Input[str]]:
         return [
             Input(),  # default
             Input(data="utf-16", type=InputType.CUSTOM),
@@ -296,7 +299,7 @@ class _PatchFileOptionArgBuilder(BaseModel):
         ]
 
     @cached_property
-    def ENCODING_IDS(self) -> list[str]:
+    def ENCODING_CONSTRUCTION_TEST_CASE_IDS(self) -> list[str]:
         return ["default", "valid", "invalid_empty", "invalid_encoding"]
 
     def build_patch_file_option_test_input(
@@ -313,5 +316,5 @@ class _PatchFileOptionArgBuilder(BaseModel):
         )
 
 
-PATCH_REQUEST_ARG_BUILDER = _PatchRequestArgBuilder()
-PATCH_FILE_OPTION_ARG_BUILDER = _PatchFileOptionArgBuilder()
+PATCH_REQUEST_TEST_CASE_BUILDER = _PatchRequestTestCaseBuilder()
+PATCH_FILE_OPTION_TEST_CASE_BUILDER = _PatchFileOptionTestCaseBuilder()
