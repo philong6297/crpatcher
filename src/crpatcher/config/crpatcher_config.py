@@ -7,6 +7,7 @@ from functools import cached_property
 from pydantic import BaseModel, Field, FilePath, validate_call
 
 from crpatcher.base import CRPATCHER_STRICT_CONFIG
+from crpatcher.config.patch_file_option import PatchFileOption
 from crpatcher.config.patch_request import PatchRequest
 from crpatcher.config.program_context import ProgramContext
 
@@ -15,6 +16,7 @@ class CrPatcherConfig(BaseModel):
     model_config = CRPATCHER_STRICT_CONFIG()
 
     requests: list[PatchRequest] = Field(default_factory=list)
+    patch_file_option: PatchFileOption = Field(default_factory=PatchFileOption)
 
     @cached_property
     def PATCH_FILE_EXTENSION(cls) -> str:

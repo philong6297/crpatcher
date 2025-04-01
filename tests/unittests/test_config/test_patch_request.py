@@ -14,35 +14,42 @@ from pydantic import ValidationError
 from crpatcher.config import PatchRequest
 from tests.base.input_data import Input, InputType
 from tests.base.pytest_cases import pytest_cases_fixture, pytest_cases_parametrize
-from tests.unittests.test_config.arg_builder import ARG_BUILDER
+from tests.unittests.test_config.arg_builder import PATCH_REQUEST_ARG_BUILDER
 from tests.unittests.test_config.helper import RequestTestInput
 
 
 @pytest_cases_fixture(scope="class")
 @pytest_cases_parametrize(
     argnames="repo_dir_arg",
-    argvalues=ARG_BUILDER.REPO_DIR_ARGVALUES,
-    ids=[f"repo_dir({id})" for id in ARG_BUILDER.REPO_DIR_IDS],
+    argvalues=PATCH_REQUEST_ARG_BUILDER.REPO_DIR_ARGVALUES,
+    ids=[f"repo_dir({id})" for id in PATCH_REQUEST_ARG_BUILDER.REPO_DIR_IDS],
 )
 @pytest_cases_parametrize(
     argnames="patch_dir_arg",
-    argvalues=ARG_BUILDER.PATCH_DIR_ARGVALUES,
-    ids=[f"patch_dir({id})" for id in ARG_BUILDER.PATCH_DIR_IDS],
+    argvalues=PATCH_REQUEST_ARG_BUILDER.PATCH_DIR_ARGVALUES,
+    ids=[f"patch_dir({id})" for id in PATCH_REQUEST_ARG_BUILDER.PATCH_DIR_IDS],
 )
 @pytest_cases_parametrize(
     argnames="ignore_patterns_arg",
-    argvalues=ARG_BUILDER.IGNORE_PATTERNS_ARGVALUES,
-    ids=[f"ignore_patterns({id})" for id in ARG_BUILDER.IGNORE_PATTERNS_IDS],
+    argvalues=PATCH_REQUEST_ARG_BUILDER.IGNORE_PATTERNS_ARGVALUES,
+    ids=[
+        f"ignore_patterns({id})" for id in PATCH_REQUEST_ARG_BUILDER.IGNORE_PATTERNS_IDS
+    ],
 )
 @pytest_cases_parametrize(
     argnames="keep_patch_files_arg",
-    argvalues=ARG_BUILDER.KEEP_PATCH_FILES_ARGVALUES,
-    ids=[f"keep_patch_files({id})" for id in ARG_BUILDER.KEEP_PATCH_FILES_IDS],
+    argvalues=PATCH_REQUEST_ARG_BUILDER.KEEP_PATCH_FILES_ARGVALUES,
+    ids=[
+        f"keep_patch_files({id})"
+        for id in PATCH_REQUEST_ARG_BUILDER.KEEP_PATCH_FILES_IDS
+    ],
 )
 @pytest_cases_parametrize(
     argnames="program_context_arg",
-    argvalues=ARG_BUILDER.PROGRAM_CONTEXT_ARGVALUES,
-    ids=[f"program_context({id})" for id in ARG_BUILDER.PROGRAM_CONTEXT_IDS],
+    argvalues=PATCH_REQUEST_ARG_BUILDER.PROGRAM_CONTEXT_ARGVALUES,
+    ids=[
+        f"program_context({id})" for id in PATCH_REQUEST_ARG_BUILDER.PROGRAM_CONTEXT_IDS
+    ],
 )
 def fixt_patch_request(
     repo_dir_arg: tuple[bool, bool],
@@ -55,7 +62,7 @@ def fixt_patch_request(
     fixt_crpatcher_non_existent_dir: Path,
     fixt_crpatcher_base_dir: Path,
 ) -> RequestTestInput:
-    return ARG_BUILDER.build_request_test_input(
+    return PATCH_REQUEST_ARG_BUILDER.build_request_test_input(
         repo_dir_arg=repo_dir_arg,
         patch_dir_arg=patch_dir_arg,
         ignore_patterns_arg=ignore_patterns_arg,

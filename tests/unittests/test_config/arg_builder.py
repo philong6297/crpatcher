@@ -13,10 +13,14 @@ from pydantic import BaseModel
 from crpatcher.base.util import CRPATCHER_STRICT_CONFIG
 from crpatcher.config import ProgramContext
 from tests.base.input_data import Input, InputType
-from tests.unittests.test_config.helper import PathData, RequestTestInput
+from tests.unittests.test_config.helper import (
+    PatchFileOptionTestInput,
+    PathData,
+    RequestTestInput,
+)
 
 
-class _ArgBuilder(BaseModel):
+class _PatchRequestArgBuilder(BaseModel):
     model_config = CRPATCHER_STRICT_CONFIG()
 
     @cached_property
@@ -253,4 +257,61 @@ def _make_dir_data(
     )
 
 
-ARG_BUILDER = _ArgBuilder()
+class _PatchFileOptionArgBuilder(BaseModel):
+    model_config = CRPATCHER_STRICT_CONFIG()
+
+    @cached_property
+    def EXTENSION_ARGVALUES(self) -> list[Input[str]]:
+        return [
+            Input(),  # default
+            Input(data="patch-1", type=InputType.CUSTOM),
+            Input(data="", type=InputType.INVALID),
+            Input(data="mp3!invalid", type=InputType.INVALID),
+        ]
+
+    @cached_property
+    def EXTENSION_IDS(self) -> list[str]:
+        return ["default", "valid", "invalid_empty", "invalid_char"]
+
+    @cached_property
+    def NAME_SEPARATOR_ARGVALUES(self) -> list[Input[str]]:
+        return [
+            Input(),  # default
+            Input(data="patch-1", type=InputType.CUSTOM),
+            Input(data="", type=InputType.CUSTOM),
+            Input(data="mp3!invalid", type=InputType.INVALID),
+        ]
+
+    @cached_property
+    def NAME_SEPARATOR_IDS(self) -> list[str]:
+        return ["default", "valid", "valid_empty", "invalid_char"]
+
+    @cached_property
+    def ENCODING_ARGVALUES(self) -> list[Input[str]]:
+        return [
+            Input(),  # default
+            Input(data="utf-16", type=InputType.CUSTOM),
+            Input(data="", type=InputType.INVALID),
+            Input(data="invalid-utf", type=InputType.INVALID),
+        ]
+
+    @cached_property
+    def ENCODING_IDS(self) -> list[str]:
+        return ["default", "valid", "invalid_empty", "invalid_encoding"]
+
+    def build_patch_file_option_test_input(
+        self,
+        *,
+        extension_arg: Input[str],
+        name_separator_arg: Input[str],
+        encoding_arg: Input[str],
+    ) -> PatchFileOptionTestInput:
+        return PatchFileOptionTestInput(
+            extension=extension_arg,
+            name_separator=name_separator_arg,
+            encoding=encoding_arg,
+        )
+
+
+PATCH_REQUEST_ARG_BUILDER = _PatchRequestArgBuilder()
+PATCH_FILE_OPTION_ARG_BUILDER = _PatchFileOptionArgBuilder()

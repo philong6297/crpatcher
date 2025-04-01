@@ -3,7 +3,8 @@
 # found in the LICENSE file.
 
 from crpatcher.config.crpatcher_config import CrPatcherConfig
+from crpatcher.config.patch_file_option import PatchFileOption
 from crpatcher.config.patch_request import PatchRequest
 from crpatcher.config.program_context import ProgramContext
 
-__all__ = ["PatchRequest", "ProgramContext", "CrPatcherConfig"]
+__all__ = ["PatchRequest", "ProgramContext", "CrPatcherConfig", "PatchFileOption"]

@@ -4,10 +4,7 @@
 
 __all__ = [
     "PatchGenError",
-    "GitRepoNotFoundError",
-    "InvalidGitRepoError",
     "GitDiffError",
-    "PatchDirCreationError",
     "PatchWriteError",
     "IgnorePatternError",
     "StalePatchRemovalError",
@@ -18,19 +15,11 @@ class PatchGenError(Exception):
     pass
 
 
-class GitRepoNotFoundError(PatchGenError):
-    pass
-
-
 class InvalidGitRepoError(PatchGenError):
     pass
 
 
 class GitDiffError(PatchGenError):
-    pass
-
-
-class PatchDirCreationError(PatchGenError):
     pass
 
 

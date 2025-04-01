@@ -5,7 +5,7 @@
 from pathlib import Path
 from typing import Any, NamedTuple
 
-from crpatcher.config import PatchRequest, ProgramContext
+from crpatcher.config import PatchFileOption, PatchRequest, ProgramContext
 from tests.base.input_data import Input, InputType
 
 
@@ -80,3 +80,46 @@ class RequestTestInput(NamedTuple):
             patch_dir=patch_dir_data.path,
             **other_args,
         )
+
+
+class PatchFileOptionTestInput(NamedTuple):
+    extension: Input[str]
+    name_separator: Input[str]
+    encoding: Input[str]
+
+    @property
+    def get_input_type(self) -> InputType:
+        if (
+            self.extension.type == InputType.INVALID
+            or self.name_separator.type == InputType.INVALID
+            or self.encoding.type == InputType.INVALID
+        ):
+            return InputType.INVALID
+
+        if (
+            self.extension.type == InputType.DEFAULT
+            and self.name_separator.type == InputType.DEFAULT
+            and self.encoding.type == InputType.DEFAULT
+        ):
+            return InputType.DEFAULT
+
+        return InputType.CUSTOM
+
+    def build_patch_file_option(self) -> PatchFileOption:
+        if self.get_input_type == InputType.INVALID:
+            raise ValueError(
+                "PatchFileOptionTestInput is invalid. Cannot build PatchFileOption."
+            )
+
+        kwargs: dict[str, Any] = {}
+
+        if self.extension.type != InputType.DEFAULT:
+            kwargs["extension"] = self.extension.safe_data
+
+        if self.name_separator.type != InputType.DEFAULT:
+            kwargs["name_separator"] = self.name_separator.safe_data
+
+        if self.encoding.type != InputType.DEFAULT:
+            kwargs["encoding"] = self.encoding.safe_data
+
+        return PatchFileOption(**kwargs)

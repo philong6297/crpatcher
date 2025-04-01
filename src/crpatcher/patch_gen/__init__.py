@@ -4,10 +4,8 @@
 
 from crpatcher.patch_gen.exception import (
     GitDiffError,
-    GitRepoNotFoundError,
     IgnorePatternError,
     InvalidGitRepoError,
-    PatchDirCreationError,
     PatchGenError,
     PatchWriteError,
     StalePatchRemovalError,
@@ -19,10 +17,8 @@ __all__ = [
     "GitPatchFileGenerator",
     # exception.py
     "PatchGenError",
-    "GitRepoNotFoundError",
     "InvalidGitRepoError",
     "GitDiffError",
-    "PatchDirCreationError",
     "PatchWriteError",
     "IgnorePatternError",
     "StalePatchRemovalError",

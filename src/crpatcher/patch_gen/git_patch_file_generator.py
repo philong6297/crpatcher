@@ -10,13 +10,11 @@ from pathlib import Path
 from git import Repo as GitPythonRepo
 from git.exc import GitError as GitPythonError
 
-from crpatcher.config import CrPatcherConfig, PatchRequest
+from crpatcher.config import PatchRequest
 from crpatcher.patch_gen.exception import (
     GitDiffError,
-    GitRepoNotFoundError,
     IgnorePatternError,
     InvalidGitRepoError,
-    PatchDirCreationError,
     PatchWriteError,
     StalePatchRemovalError,
 )
@@ -49,16 +47,16 @@ class GitPatchFileGenerator:
         )
 
         # 1. Get all modified files in the repo
-        modified_files = self._get_modified_absolute_filepaths()
+        modified_files = self._get_modified_files()
         # 2. Write patch files
-        patch_files = self._write_patch_files(modified_files)
+        patch_files = self._generate_patches(modified_files)
         # 3. Remove stale patch files
         self.remove_stale_patch_files(patch_files)
 
-    def _write_patch_files(self, modified_absolute_filepaths: list[Path]) -> list[str]:
+    def _generate_patches(self, files: list[Path]) -> list[str]:
         # validate that all files are in the repo then generate corresponding patch filenames
         patch_file_names: list[str] = []
-        for filepath in modified_absolute_filepaths:
+        for filepath in files:
             if (
                 not filepath.is_file()
                 or self._patch_request.repo_dir not in filepath.parents
@@ -79,20 +77,18 @@ class GitPatchFileGenerator:
             )
             filename = (
                 f"{formatted_name}"
-                f".{CrPatcherConfig.PATCH_FILE_EXTENSION}"  # file extension
+                f".{self._patch_file_extension}"  # file extension
             )
             patch_file_names.append(filename)
 
         patches_write_done_so_far = 0
-        total_patches_to_write = len(modified_absolute_filepaths)
+        total_patches_to_write = len(files)
 
         _logger.info(
             f"Writing {total_patches_to_write} .{self._patch_file_extension} files:"
         )
 
-        for modified_file, patch_file_name in zip(
-            modified_absolute_filepaths, patch_file_names
-        ):
+        for modified_file, patch_file_name in zip(files, patch_file_names):
             relative_filepath = modified_file.relative_to(self._patch_request.repo_dir)
             patch_content = self._run_git_diff(
                 [
@@ -147,7 +143,8 @@ class GitPatchFileGenerator:
                     f"Failed to remove stale patch file {filename}: {e}"
                 ) from e
 
-    def _get_modified_absolute_filepaths(self) -> list[Path]:
+    # return absolute paths of modified files
+    def _get_modified_files(self) -> list[Path]:
         cmd_output: str = self._run_git_diff(
             [
                 "--ignore-submodules",
