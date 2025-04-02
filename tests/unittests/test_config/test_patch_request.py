@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+from pathspec import PathSpec
 from pydantic import ValidationError
 
 from crpatcher.config import PatchRequest
@@ -211,5 +212,7 @@ def test_construction_with_program_context(
                 assert (
                     actual_result.ignore_patterns == test_case.ignore_patterns.safe_data
                 )
+                assert isinstance(actual_result.ignore_pattern_matcher, PathSpec)
             else:
                 assert actual_result.ignore_patterns == []
+                assert actual_result.ignore_pattern_matcher is None

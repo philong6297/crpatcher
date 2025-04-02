@@ -17,9 +17,7 @@ def command_generate_patches(config: CrPatcherConfig) -> None:
         )
         generator = GitPatchFileGenerator(
             patch_request=request,
-            patch_file_extension=config.PATCH_FILE_EXTENSION,
-            patch_file_encoding=config.PATCH_FILE_ENCODING,
-            patch_file_name_separator=config.PATCH_FILE_NAME_SEPARATOR,
+            patch_file_option=config.patch_file_option,
         )
         generator.update_patches()
 

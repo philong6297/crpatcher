@@ -10,7 +10,7 @@ from pathlib import Path
 from git import Repo as GitPythonRepo
 from git.exc import GitError as GitPythonError
 
-from crpatcher.config import PatchRequest
+from crpatcher.config import PatchFileOption, PatchRequest
 from crpatcher.patch_gen.exception import (
     GitDiffError,
     IgnorePatternError,
@@ -27,14 +27,10 @@ class GitPatchFileGenerator:
         self,
         *,
         patch_request: PatchRequest,
-        patch_file_extension: str,
-        patch_file_encoding: str,
-        patch_file_name_separator: str,
+        patch_file_option: PatchFileOption,
     ):
         self._patch_request = patch_request
-        self._patch_file_extension = patch_file_extension
-        self._patch_file_encoding = patch_file_encoding
-        self._patch_file_name_separator = patch_file_name_separator
+        self._patch_file_option = patch_file_option
 
         try:
             self._repo = GitPythonRepo(self._patch_request.repo_dir)
@@ -72,12 +68,12 @@ class GitPatchFileGenerator:
                 )  # convert to relative path as we dont need to include the repo dir in the filename
                 .as_posix()  # use posix to get rid of different OS path separators
                 .replace(
-                    "/", self._patch_file_name_separator
+                    "/", self._patch_file_option.name_separator
                 )  # replace slashes with replacement_separator
             )
             filename = (
                 f"{formatted_name}"
-                f".{self._patch_file_extension}"  # file extension
+                f".{self._patch_file_option.extension}"  # file extension
             )
             patch_file_names.append(filename)
 
@@ -85,7 +81,7 @@ class GitPatchFileGenerator:
         total_patches_to_write = len(files)
 
         _logger.info(
-            f"Writing {total_patches_to_write} .{self._patch_file_extension} files:"
+            f"Writing {total_patches_to_write} .{self._patch_file_option.extension} files:"
         )
 
         for modified_file, patch_file_name in zip(files, patch_file_names):
@@ -101,7 +97,7 @@ class GitPatchFileGenerator:
             try:
                 patch_file = self._patch_request.patch_dir / patch_file_name
                 patch_file.write_text(
-                    data=patch_content, encoding=self._patch_file_encoding
+                    data=patch_content, encoding=self._patch_file_option.encoding
                 )
             except Exception as e:
                 raise PatchWriteError(f"TODO(longlp): add error message") from e
@@ -114,12 +110,12 @@ class GitPatchFileGenerator:
         return patch_file_names
 
     def remove_stale_patch_files(self, updated_patch_filenames: list[str]) -> None:
-        _logger.info(f"Removing stale .{self._patch_file_extension} files:")
+        _logger.info(f"Removing stale .{self._patch_file_option.extension} files:")
 
         existing_patch_files = {
             f.name
             for f in self._patch_request.patch_dir.glob(
-                f"*.{self._patch_file_extension}"
+                f"*.{self._patch_file_option.extension}"
             )
         }
         patch_files_to_keep = set(
@@ -130,7 +126,9 @@ class GitPatchFileGenerator:
         ]
 
         if not to_remove_filenames:
-            _logger.info(f"No stale .{self._patch_file_extension} files to remove.")
+            _logger.info(
+                f"No stale .{self._patch_file_option.extension} files to remove."
+            )
             return
 
         remove_count = len(to_remove_filenames)

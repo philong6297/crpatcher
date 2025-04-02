@@ -19,18 +19,6 @@ class CrPatcherConfig(BaseModel):
     patch_file_option: PatchFileOption = Field(default_factory=PatchFileOption)
 
     @cached_property
-    def PATCH_FILE_EXTENSION(cls) -> str:
-        return "patch"
-
-    @cached_property
-    def PATCH_FILE_ENCODING(cls) -> str:
-        return "utf-8"
-
-    @cached_property
-    def PATCH_FILE_NAME_SEPARATOR(cls) -> str:
-        return "-"
-
-    @cached_property
     def PATCHINFO_FILE_EXTENSION(cls) -> str:
         return "patchinfo"
 
