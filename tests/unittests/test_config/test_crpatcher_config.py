@@ -24,7 +24,7 @@ from tests.unittests.test_config.helper import (
     PatchFileOptionTestInput,
     RequestTestInput,
 )
-from tests.unittests.test_config.test_case_builder import (
+from tests.unittests.test_config.tc_builder import (
     PATCH_FILE_OPTION_TEST_CASE_BUILDER,
     PATCH_REQUEST_TEST_CASE_BUILDER,
 )

@@ -16,7 +16,7 @@ from crpatcher.config import PatchRequest
 from tests.base.input_data import Input, InputType
 from tests.base.pytest_cases import pytest_cases_fixture, pytest_cases_parametrize
 from tests.unittests.test_config.helper import RequestTestInput
-from tests.unittests.test_config.test_case_builder import (
+from tests.unittests.test_config.tc_builder import (
     PATCH_REQUEST_TEST_CASE_BUILDER,
 )
 

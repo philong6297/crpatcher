@@ -11,7 +11,7 @@ from pydantic import ValidationError
 from crpatcher.config import PatchFileOption
 from tests.base.input_data import Input, InputType
 from tests.base.pytest_cases import pytest_cases_parametrize
-from tests.unittests.test_config.test_case_builder import (
+from tests.unittests.test_config.tc_builder import (
     PATCH_FILE_OPTION_TEST_CASE_BUILDER,
 )
 

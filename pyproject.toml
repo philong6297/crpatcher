@@ -55,3 +55,7 @@ testpaths = ["tests"]
 tmp_path_retention_policy = "failed"
 verbosity_assertions = 2
 verbosity_test_cases = 2
+
+[tool.pyright]
+include = ["src/crpatcher", "tests"]
+strict = ["src/crpatcher"]
