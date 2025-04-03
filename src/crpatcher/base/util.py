@@ -70,13 +70,8 @@ def calculate_file_checksum_sha256(
     file_path: FilePath,
     buffer_size: int = Field(ge=1, default=8192),
 ) -> str:
-    try:
-        checksum_generator = hashlib.new("sha256")
-        with file_path.open("rb") as file:
-            while chunk := file.read(buffer_size):
-                checksum_generator.update(chunk)
-        return checksum_generator.hexdigest()
-    except Exception as err:
-        raise RuntimeError(
-            f"Checksum calculation failed for {file_path}: {err}"
-        ) from err
+    checksum_generator = hashlib.new("sha256")
+    with file_path.open("rb") as file:
+        while chunk := file.read(buffer_size):
+            checksum_generator.update(chunk)
+    return checksum_generator.hexdigest()

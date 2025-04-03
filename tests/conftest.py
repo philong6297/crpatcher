@@ -2,4 +2,4 @@
 # Use of this source code is governed by a MIT license that can be
 # found in the LICENSE file.
 
-pytest_plugins = ("pytest_cases", "pytest_cov")
+pytest_plugins = ("pytest_cases", "pytest_cov", "pytest_mock")

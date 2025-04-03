@@ -3,19 +3,20 @@
 # found in the LICENSE file.
 
 
-from pathlib import Path
 import uuid
 from contextlib import nullcontext
+from pathlib import Path
 
-from git import Repo
 import pytest
+from git import Repo
+from pytest_mock import MockerFixture
 
-from crpatcher.patch_gen import GitPatchFileGenerator, InvalidGitRepoError, GitDiffError
-from crpatcher.config import PatchRequest, PatchFileOption
+from crpatcher.config import PatchFileOption, PatchRequest
+from crpatcher.patch_gen import GitDiffError, GitPatchFileGenerator, InvalidGitRepoError
 from tests.base.pytest_cases import (
-    pytest_cases_parametrize,
     pytest_cases_fixture,
     pytest_cases_fixture_ref,
+    pytest_cases_parametrize,
 )
 
 
@@ -76,6 +77,8 @@ def test_get_modified_files(fixt_repo_dir: Path, fixt_crpatcher_base_dir: Path):
     file1_path.write_text("modified content 1")
     file2_path.write_text("modified content 2")
 
+    # 1. Test that the modified files are detected. No ignore patterns.
+
     generator = GitPatchFileGenerator(
         patch_request=PatchRequest(
             repo_dir=fixt_repo_dir, patch_dir=fixt_crpatcher_base_dir
@@ -89,6 +92,24 @@ def test_get_modified_files(fixt_repo_dir: Path, fixt_crpatcher_base_dir: Path):
     assert len(modified_files) == 2
     assert file1_path in modified_files
     assert file2_path in modified_files
+
+    # 2. Test that the modified files are detected. With ignore patterns.
+
+    generator = GitPatchFileGenerator(
+        patch_request=PatchRequest(
+            repo_dir=fixt_repo_dir,
+            patch_dir=fixt_crpatcher_base_dir,
+            ignore_patterns=["dir1/*"],
+        ),
+        patch_file_option=PatchFileOption(),
+    )
+
+    modified_files = generator._get_modified_files()
+
+    # Should detect only file1.txt
+    assert len(modified_files) == 1
+    assert file1_path in modified_files
+    assert file2_path not in modified_files
 
 
 def test_generate_patches(fixt_repo_dir: Path, fixt_crpatcher_base_dir: Path):
@@ -166,14 +187,11 @@ def test_ignore_patterns(fixt_repo_dir: Path, fixt_crpatcher_base_dir: Path):
     assert not (fixt_crpatcher_base_dir / "dir1_file2.txt.patch").exists()
 
 
-def test_run_git_diff(fixt_repo_dir: Path, fixt_crpatcher_base_dir: Path, monkeypatch):
-    from git.exc import GitCommandError
+def test_run_git_diff(
+    fixt_repo_dir: Path, fixt_crpatcher_base_dir: Path, class_mocker: MockerFixture
+):
     from git.cmd import Git
-
-    # Create a custom Git class that raises an error for diff
-    class ErrorGit(Git):
-        def diff(self, *args, **kwargs):
-            raise GitCommandError("git diff", 128, "mock git diff error")
+    from git.exc import GitCommandError
 
     generator = GitPatchFileGenerator(
         patch_request=PatchRequest(
@@ -195,8 +213,14 @@ def test_run_git_diff(fixt_repo_dir: Path, fixt_crpatcher_base_dir: Path, monkey
         output = generator._run_git_diff([])
         assert len(output) > 0
 
-    # Replace the git instance with our error-raising version
-    generator._repo.git = ErrorGit(generator._repo.working_dir)
-
+    # git.diff is actually git._call_process("diff", ...)
+    # we only run the diff command here so it is safe to just set side_effect to _call_process
+    mocked_call_process = class_mocker.patch.object(
+        Git,
+        "_call_process",
+        side_effect=GitCommandError("git diff", 128, "mock git diff error"),
+    )
     with pytest.raises(GitDiffError):
         generator._run_git_diff([])
+    mocked_call_process.assert_called_once_with("diff")
+    class_mocker.stop(mocked_call_process)

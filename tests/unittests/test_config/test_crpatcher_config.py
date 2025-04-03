@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import itertools
 import json
 import uuid
 from contextlib import nullcontext
@@ -29,23 +30,18 @@ from tests.unittests.test_config.tc_builder import (
     PATCH_REQUEST_TEST_CASE_BUILDER,
 )
 
+RequestTestCase = Input[list[RequestTestInput]]
+PatchFileOptionTestCase = PatchFileOptionTestInput
+CrPatcherTestCase = tuple[RequestTestCase, PatchFileOptionTestCase]
 
-@pytest_cases_fixture(scope="class")
-@pytest_cases_parametrize(
-    argnames="input_type",
-    argvalues=list(InputType),
-    ids=[f"(requests={type.name})" for type in InputType],
-)
-def fixt_requests(
-    input_type: InputType,
+
+@pytest_cases_fixture(scope="function")
+def fixt_all_test_cases(
     fixt_crpatcher_existing_empty_file: Path,
     fixt_crpatcher_existing_empty_dir: Path,
     fixt_crpatcher_non_existent_dir: Path,
     fixt_crpatcher_base_dir: Path,
-) -> Input[list[RequestTestInput]]:
-    if input_type == InputType.DEFAULT:
-        return Input()
-
+) -> list[CrPatcherTestCase]:
     all_requests = PATCH_REQUEST_TEST_CASE_BUILDER.build_all_requests(
         existing_empty_file=fixt_crpatcher_existing_empty_file,
         existing_empty_dir=fixt_crpatcher_existing_empty_dir,
@@ -53,116 +49,76 @@ def fixt_requests(
         base_dir=fixt_crpatcher_base_dir,
     )
 
-    valid_requests: list[RequestTestInput] = []
-    invalid_requests: list[RequestTestInput] = []
+    valid: list[RequestTestInput] = []
+    invalid: list[RequestTestInput] = []
 
-    for data in all_requests:
-        if data.is_valid:
-            valid_requests.append(data)
+    for request in all_requests:
+        if request.is_valid:
+            valid.append(request)
         else:
-            invalid_requests.append(data)
+            invalid.append(request)
 
-    if input_type == InputType.CUSTOM:
-        return Input(
-            data=valid_requests,
-            type=InputType.CUSTOM,
+    requests_test_cases: list[RequestTestCase] = [
+        Input(),  # default
+        Input(data=valid, type=InputType.CUSTOM),
+        Input(data=invalid, type=InputType.INVALID),
+    ]
+
+    patch_file_option_test_cases: list[PatchFileOptionTestCase] = [
+        PATCH_FILE_OPTION_TEST_CASE_BUILDER.build_patch_file_option_test_input(
+            extension_arg=extension_arg,
+            name_separator_arg=name_separator_arg,
+            encoding_arg=encoding_arg,
         )
-    elif input_type == InputType.INVALID:
-        return Input(
-            data=invalid_requests,
-            type=InputType.INVALID,
+        for extension_arg, name_separator_arg, encoding_arg in itertools.product(
+            PATCH_FILE_OPTION_TEST_CASE_BUILDER.EXTENSION_CONSTRUCTION_TEST_CASES,
+            PATCH_FILE_OPTION_TEST_CASE_BUILDER.NAME_SEPARATOR_CONSTRUCTION_TEST_CASES,
+            PATCH_FILE_OPTION_TEST_CASE_BUILDER.ENCODING_CONSTRUCTION_TEST_CASES,
         )
-    else:
-        raise ValueError("Not reachable")
+    ]
 
-
-def _idgen_for_fixt_patch_file_option(**kwargs: dict[str, Any]) -> str:
-    extension_id = kwargs["extension_id"]
-    name_separator_id = kwargs["name_separator_id"]
-    encoding_id = kwargs["encoding_id"]
-
-    data_str = (
-        f"(extension=({extension_id}))-"
-        f"(name_separator=({name_separator_id}))-"
-        f"(encoding=({encoding_id}))"
-    )
-
-    return f"(requests={data_str})"
-
-
-@pytest_cases_fixture(scope="class")
-@pytest_cases_parametrize(
-    idgen=_idgen_for_fixt_patch_file_option,
-    **{
-        "extension_arg,extension_id": list(
-            zip(
-                PATCH_FILE_OPTION_TEST_CASE_BUILDER.EXTENSION_CONSTRUCTION_TEST_CASES,
-                PATCH_FILE_OPTION_TEST_CASE_BUILDER.EXTENSION_CONSTRUCTION_TEST_CASE_IDS,
-            )
-        ),
-        "name_separator_arg,name_separator_id": list(
-            zip(
-                PATCH_FILE_OPTION_TEST_CASE_BUILDER.NAME_SEPARATOR_CONSTRUCTION_TEST_CASES,
-                PATCH_FILE_OPTION_TEST_CASE_BUILDER.NAME_SEPARATOR_CONSTRUCTION_TEST_CASE_IDS,
-            )
-        ),
-        "encoding_arg,encoding_id": list(
-            zip(
-                PATCH_FILE_OPTION_TEST_CASE_BUILDER.ENCODING_CONSTRUCTION_TEST_CASES,
-                PATCH_FILE_OPTION_TEST_CASE_BUILDER.ENCODING_CONSTRUCTION_TEST_CASE_IDS,
-            )
-        ),
-    },
-)
-def fixt_patch_file_option(
-    extension_arg: Input[str],
-    name_separator_arg: Input[str],
-    encoding_arg: Input[str],
-    extension_id: str,  # unused
-    name_separator_id: str,  # unused
-    encoding_id: str,  # unused
-) -> PatchFileOptionTestInput:
-    return PATCH_FILE_OPTION_TEST_CASE_BUILDER.build_patch_file_option_test_input(
-        extension_arg=extension_arg,
-        name_separator_arg=name_separator_arg,
-        encoding_arg=encoding_arg,
+    return list(
+        itertools.product(
+            requests_test_cases,
+            patch_file_option_test_cases,
+        )
     )
 
 
-def test_direct_construction(
-    fixt_requests: Input[list[RequestTestInput]],
-    fixt_patch_file_option: PatchFileOptionTestInput,
-) -> None:
+def test_direct_construction(fixt_all_test_cases: list[CrPatcherTestCase]) -> None:
     # Direct construction can only be tested with valid input data. Since any invalid input should raise error from the construction of each field member itself.
-    if (
-        fixt_requests.type == InputType.INVALID
-        or fixt_patch_file_option.get_input_type == InputType.INVALID
-    ):
-        return
+    for requests_arg, patch_file_option_arg in fixt_all_test_cases:
+        if (
+            requests_arg.type == InputType.INVALID
+            or patch_file_option_arg.get_input_type == InputType.INVALID
+        ):
+            return
 
-    expected: dict[str, Any] = {
-        "requests": [],
-        "patch_file_option": PatchFileOption(),
-    }
+        expected: dict[str, Any] = {
+            "requests": [],
+            "patch_file_option": PatchFileOption(),
+        }
 
-    # Build kwargs dict only including non-DEFAULT fields
-    kwargs: dict[str, Any] = {}
+        # Build kwargs dict only including non-DEFAULT fields
+        kwargs: dict[str, Any] = {}
 
-    if fixt_requests.type != InputType.DEFAULT:
-        expected["requests"] = [
-            request.build_patch_request() for request in fixt_requests.safe_data
-        ]
+        if requests_arg.type != InputType.DEFAULT:
+            expected["requests"] = [
+                request.build_patch_request() for request in requests_arg.safe_data
+            ]
 
-        kwargs["requests"] = expected["requests"]
+            kwargs["requests"] = expected["requests"]
 
-    if fixt_patch_file_option.get_input_type != InputType.DEFAULT:
-        expected["patch_file_option"] = fixt_patch_file_option.build_patch_file_option()
-        kwargs["patch_file_option"] = expected["patch_file_option"]
+        if patch_file_option_arg.get_input_type != InputType.DEFAULT:
+            expected["patch_file_option"] = (
+                patch_file_option_arg.build_patch_file_option()
+            )
+            kwargs["patch_file_option"] = expected["patch_file_option"]
 
-    actual_config = CrPatcherConfig(**kwargs)
+        actual_config = CrPatcherConfig(**kwargs)
 
-    assert actual_config.requests == expected["requests"]
-    assert actual_config.patch_file_option == expected["patch_file_option"]
+        assert actual_config.requests == expected["requests"]
+        assert actual_config.patch_file_option == expected["patch_file_option"]
 
 
 @pytest_cases_parametrize(
@@ -186,39 +142,41 @@ def test_create_from_invalid_config_file(config_file: Path) -> None:
 
 
 def test_create_from_existing_config_file(
-    fixt_crpatcher_base_dir: Path,
-    fixt_requests: Input[list[RequestTestInput]],
-    fixt_patch_file_option: PatchFileOptionTestInput,
+    fixt_crpatcher_base_dir: Path, fixt_all_test_cases: list[CrPatcherTestCase]
 ) -> None:
-    valid_config_file = _create_config_file(
-        base_dir=fixt_crpatcher_base_dir,
-        requests=fixt_requests,
-        patch_file_option=fixt_patch_file_option,
-    )
+    for requests_arg, patch_file_option_arg in fixt_all_test_cases:
+        valid_config_file = _create_config_file(
+            base_dir=fixt_crpatcher_base_dir,
+            requests=requests_arg,
+            patch_file_option=patch_file_option_arg,
+        )
 
-    should_raise_error = (
-        fixt_requests.is_invalid_data
-        or fixt_patch_file_option.get_input_type == InputType.INVALID
-    )
+        should_raise_error = (
+            requests_arg.is_invalid_data
+            or patch_file_option_arg.get_input_type == InputType.INVALID
+        )
 
-    with pytest.raises(ValidationError) if should_raise_error else nullcontext():
-        actual_config = CrPatcherConfig.create_from_config_file(valid_config_file)
+        with pytest.raises(ValidationError) if should_raise_error else nullcontext():
+            actual_config = CrPatcherConfig.create_from_config_file(valid_config_file)
 
-        if not should_raise_error:
-            expected_requests = (
-                [request.build_patch_request() for request in fixt_requests.safe_data]
-                if fixt_requests.type == InputType.CUSTOM
-                else []
-            )
+            if not should_raise_error:
+                expected_requests = (
+                    [
+                        request.build_patch_request()
+                        for request in requests_arg.safe_data
+                    ]
+                    if requests_arg.type == InputType.CUSTOM
+                    else []
+                )
 
-            expected_patch_file_option = (
-                fixt_patch_file_option.build_patch_file_option()
-                if fixt_patch_file_option.get_input_type == InputType.CUSTOM
-                else PatchFileOption()
-            )
+                expected_patch_file_option = (
+                    patch_file_option_arg.build_patch_file_option()
+                    if patch_file_option_arg.get_input_type == InputType.CUSTOM
+                    else PatchFileOption()
+                )
 
-            assert actual_config.requests == expected_requests
-            assert actual_config.patch_file_option == expected_patch_file_option
+                assert actual_config.requests == expected_requests
+                assert actual_config.patch_file_option == expected_patch_file_option
 
 
 def _create_config_file(

@@ -1,13 +1,19 @@
-import itertools
+from unittest.mock import MagicMock, patch
 
-from pydantic import BaseModel, ConfigDict, Field
+from git import Repo
+from git.cmd import Git
 
-from tests.base.pytest_cases import *
+original_call_process = Git._call_process
 
 
-@pytest_cases_parametrize(
-    a=[1, 2, 3],
-    b=[4, 5, 6],
-)
-def test_a(a: int, b: int) -> None:
-    assert a + b < 0
+def custom_side_effect(self, command, *args, **kwargs):
+    if command == "diff":
+        return "mocked diff output"
+    # fallback to the real behavior for all other commands
+    return original_call_process(self, command, *args, **kwargs)
+
+
+repo = Repo("C:/Users/longlp/Downloads/build-commands/chromium_patcher")
+with patch.object(Git, "_call_process", new=custom_side_effect):
+    print(repo.git.diff())  # -> mocked diff output
+    print(repo.git.status())  # -> real status output from git

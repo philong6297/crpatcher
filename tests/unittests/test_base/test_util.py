@@ -2,6 +2,7 @@
 # Use of this source code is governed by a MIT license that can be
 # found in the LICENSE file.
 
+import itertools
 from contextlib import nullcontext
 from pathlib import Path
 
@@ -17,72 +18,78 @@ from tests.base.pytest_cases import *
 
 
 @pytest.fixture(scope="class")
-def existing_file_with_content_fixt(fixt_crpatcher_base_dir: Path) -> Path:
+def fixt_existing_file_with_content(fixt_crpatcher_base_dir: Path) -> Path:
     file = (fixt_crpatcher_base_dir / "hello_world.txt").absolute()
     if not file.exists():
         file.touch()
     if not file.is_file():
-        raise FileNotFoundError(f"existing_file_with_content_fixt={file} is not a file")
+        raise FileNotFoundError(f"fixt_existing_file_with_content={file} is not a file")
     file.write_text("Hello, world!", encoding="utf-8")
     return file
 
 
-@pytest_cases_parametrize(
-    argnames="path,expected_checksum,type",
-    argvalues=[
-        (
-            pytest_cases_fixture_ref("fixt_crpatcher_existing_empty_file"),
-            "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",  # hash of empty file
-            InputType.CUSTOM,
+def test_calculate_file_checksum_sha256(
+    fixt_crpatcher_existing_empty_file: Path,
+    fixt_crpatcher_non_existent_file: Path,
+    fixt_crpatcher_existing_empty_dir: Path,
+    fixt_existing_file_with_content: Path,
+):
+    file_path_test_cases = [
+        Input(
+            data=(
+                fixt_crpatcher_existing_empty_file,
+                "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",  # hash of empty file
+            ),
+            type=InputType.CUSTOM,
         ),
-        (
-            pytest_cases_fixture_ref("fixt_crpatcher_non_existent_file"),
-            "",
-            InputType.INVALID,
+        Input(
+            data=(
+                fixt_crpatcher_non_existent_file,
+                "",
+            ),
+            type=InputType.INVALID,
         ),
-        (
-            pytest_cases_fixture_ref("fixt_crpatcher_existing_empty_dir"),
-            "",
-            InputType.INVALID,
+        Input(
+            data=(
+                fixt_crpatcher_existing_empty_dir,
+                "",
+            ),
+            type=InputType.INVALID,
         ),
-        (
-            pytest_cases_fixture_ref("existing_file_with_content_fixt"),
-            "315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3",  # hash of "Hello, world!"
-            InputType.CUSTOM,
+        Input(
+            data=(
+                fixt_existing_file_with_content,
+                "315f5bdb76d078c43b8ac0064e4a0164612b1fce77c869345bfc94c75894edd3",  # hash of "Hello, world!"
+            ),
+            type=InputType.CUSTOM,
         ),
-    ],
-    idgen=lambda **args: f"(type={args['type'].name})-(path={args['path']})",  # type: ignore
-)
-@pytest_cases_parametrize(
-    argnames="buffer_size_input",
-    argvalues=[
+    ]
+
+    buffer_size_test_cases = [
         Input[int](),  #  default
         Input(data=1024, type=InputType.CUSTOM),
         Input(data=0, type=InputType.INVALID),  # invalid, must be >= 1
-    ],
-    idgen=Input.idgen_use_input_type(),
-)
-def test_calculate_file_checksum_sha256(
-    buffer_size_input: Input[int], path: Path, expected_checksum: str, type: InputType
-):
-    file_path_input = Input(data=(path, expected_checksum), type=type)
+    ]
 
-    should_raise_value_error = (
-        buffer_size_input.is_invalid_data or file_path_input.is_invalid_data
-    )
-    with pytest.raises(ValueError) if should_raise_value_error else nullcontext():
-        file_path, expected_checksum = file_path_input.safe_data
-
-        result = (
-            calculate_file_checksum_sha256(
-                file_path=file_path,
-                buffer_size=buffer_size_input.safe_data,
-            )
-            if buffer_size_input.type != InputType.DEFAULT
-            else calculate_file_checksum_sha256(file_path=file_path)
+    for file_path_input, buffer_size_input in itertools.product(
+        file_path_test_cases, buffer_size_test_cases
+    ):
+        should_raise_value_error = (
+            buffer_size_input.is_invalid_data or file_path_input.is_invalid_data
         )
+        with pytest.raises(ValueError) if should_raise_value_error else nullcontext():
+            file_path, expected_checksum = file_path_input.safe_data
 
-        assert result == expected_checksum
+            result = (
+                calculate_file_checksum_sha256(
+                    file_path=file_path,
+                    buffer_size=buffer_size_input.safe_data,
+                )
+                if buffer_size_input.type != InputType.DEFAULT
+                else calculate_file_checksum_sha256(file_path=file_path)
+            )
+
+            assert result == expected_checksum
 
 
 def test_exists_encoding():

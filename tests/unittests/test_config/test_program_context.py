@@ -10,33 +10,34 @@ from pydantic import ValidationError
 
 from crpatcher.config import ProgramContext
 from tests.base.input_data import InputType
-from tests.base.pytest_cases import pytest_cases_fixture_ref, pytest_cases_parametrize
 
 
-@pytest_cases_parametrize(
-    argnames="input_data,input_type",
-    argvalues=[
+def test_program_context(
+    fixt_crpatcher_existing_empty_dir: Path,
+    fixt_crpatcher_non_existent_file: Path,
+    fixt_crpatcher_existing_empty_file: Path,
+):
+    test_cases = [
         (
-            pytest_cases_fixture_ref("fixt_crpatcher_existing_empty_file"),
+            fixt_crpatcher_existing_empty_file,
             InputType.CUSTOM,
         ),  # valid file
         (
-            pytest_cases_fixture_ref("fixt_crpatcher_non_existent_file"),
+            fixt_crpatcher_non_existent_file,
             InputType.INVALID,
         ),  # invalid, non-existent file
         (
-            pytest_cases_fixture_ref("fixt_crpatcher_existing_empty_dir"),
+            fixt_crpatcher_existing_empty_dir,
             InputType.INVALID,
         ),  # invalid, directory
-    ],
-    ids=["valid_file", "invalid_non_existent", "invalid_directory"],
-)
-def test_program_context(input_data: Path, input_type: InputType):
-    with (
-        pytest.raises(ValidationError)
-        if input_type == InputType.INVALID
-        else nullcontext()
-    ):
-        context = ProgramContext(config_file=input_data)
-        if input_type != InputType.INVALID:
-            assert context.config_file == input_data
+    ]
+
+    for input_data, input_type in test_cases:
+        with (
+            pytest.raises(ValidationError)
+            if input_type == InputType.INVALID
+            else nullcontext()
+        ):
+            context = ProgramContext(config_file=input_data)
+            if input_type != InputType.INVALID:
+                assert context.config_file == input_data

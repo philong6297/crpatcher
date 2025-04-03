@@ -32,6 +32,7 @@ test = [
   "decopatch>=1.4",
   "pytest-cases>=3.8",
   "pytest-cov>=4.2",
+  "pytest-mock>=3.14",
   "pytest>=8",
 ]
 
@@ -59,3 +60,4 @@ verbosity_test_cases = 2
 [tool.pyright]
 include = ["src/crpatcher", "tests"]
 strict = ["src/crpatcher"]
+typeCheckingMode = "standard"

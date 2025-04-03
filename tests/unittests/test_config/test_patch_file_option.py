@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 import contextlib
+import itertools
 from typing import Any
 
 import pytest
@@ -11,9 +12,7 @@ from pydantic import ValidationError
 from crpatcher.config import PatchFileOption
 from tests.base.input_data import Input, InputType
 from tests.base.pytest_cases import pytest_cases_parametrize
-from tests.unittests.test_config.tc_builder import (
-    PATCH_FILE_OPTION_TEST_CASE_BUILDER,
-)
+from tests.unittests.test_config.tc_builder import PATCH_FILE_OPTION_TEST_CASE_BUILDER
 
 
 def _idgen_for_fixt_patch_file_option(**kwargs: dict[str, Any]) -> str:
@@ -59,43 +58,48 @@ def test_direct_constructor(
     name_separator_id: str,  # unused
     encoding_id: str,  # unused
 ):
-    should_raise_error = (
-        extension_arg.is_invalid_data
-        or name_separator_arg.is_invalid_data
-        or encoding_arg.is_invalid_data
+    test_cases = itertools.product(
+        PATCH_FILE_OPTION_TEST_CASE_BUILDER.EXTENSION_CONSTRUCTION_TEST_CASES,
+        PATCH_FILE_OPTION_TEST_CASE_BUILDER.NAME_SEPARATOR_CONSTRUCTION_TEST_CASES,
+        PATCH_FILE_OPTION_TEST_CASE_BUILDER.ENCODING_CONSTRUCTION_TEST_CASES,
     )
 
-    with (
-        pytest.raises(ValidationError)
-        if should_raise_error
-        else contextlib.nullcontext()
-    ):
-        kwargs: dict[str, Any] = {}
+    for extension_arg, name_separator_arg, encoding_arg in test_cases:
+        should_raise_error = (
+                extension_arg.is_invalid_data
+            or name_separator_arg.is_invalid_data
+            or encoding_arg.is_invalid_data
+        )
 
-        # default values
-        expected = {
-            "extension": "patch",
-            "name_separator": "-",
-            "encoding": "utf-8",
-        }
+        with (
+            pytest.raises(ValidationError)
+            if should_raise_error
+            else contextlib.nullcontext()
+        ):
+            kwargs: dict[str, Any] = {}
 
-        # mimic default value by adding to kwargs first. only set the value if the input is custom
+            # default values
+            expected = {
+                "extension": "patch",
+                "name_separator": "-",
+                "encoding": "utf-8",
+            }
 
-        if extension_arg.type != InputType.DEFAULT:
-            expected["extension"] = extension_arg.safe_data
-            kwargs["extension"] = expected["extension"]
-        if name_separator_arg.type != InputType.DEFAULT:
-            expected["name_separator"] = name_separator_arg.safe_data
-            kwargs["name_separator"] = expected["name_separator"]
-        if encoding_arg.type != InputType.DEFAULT:
-            expected["encoding"] = encoding_arg.safe_data
-            kwargs["encoding"] = expected["encoding"]
+            # mimic default value by adding to kwargs first. only set the value if the input is custom
 
-        actual = PatchFileOption(**kwargs)
+            if extension_arg.type != InputType.DEFAULT:
+                expected["extension"] = extension_arg.safe_data
+                kwargs["extension"] = expected["extension"]
+            if name_separator_arg.type != InputType.DEFAULT:
+                expected["name_separator"] = name_separator_arg.safe_data
+                kwargs["name_separator"] = expected["name_separator"]
+            if encoding_arg.type != InputType.DEFAULT:
+                expected["encoding"] = encoding_arg.safe_data
+                kwargs["encoding"] = expected["encoding"]
 
-        if not should_raise_error:
-            assert actual.extension == expected["extension"]
-            assert actual.name_separator == expected["name_separator"]
-            assert actual.encoding == expected["encoding"]
-            assert actual.name_separator == expected["name_separator"]
-            assert actual.encoding == expected["encoding"]
+            actual = PatchFileOption(**kwargs)
+
+            if not should_raise_error:
+                assert actual.extension == expected["extension"]
+                assert actual.name_separator == expected["name_separator"]
+                assert actual.encoding == expected["encoding"]
