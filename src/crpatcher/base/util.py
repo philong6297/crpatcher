@@ -9,13 +9,15 @@ import hashlib
 import logging
 import os
 import re
+from pathlib import Path
 
-from pydantic import ConfigDict, Field, FilePath, validate_call
+from pydantic import ConfigDict, DirectoryPath, Field, FilePath, validate_call
 
 __all__ = [
     "calculate_file_checksum_sha256",
     "exists_encoding",
     "is_filename_only",
+    "is_file_in_folder",
     "CRPATCHER_STRICT_CONFIG",
 ]
 
@@ -75,3 +77,18 @@ def calculate_file_checksum_sha256(
         while chunk := file.read(buffer_size):
             checksum_generator.update(chunk)
     return checksum_generator.hexdigest()
+
+
+@validate_call(
+    config=CRPATCHER_STRICT_CONFIG(),
+    validate_return=False,
+)
+def is_file_in_folder(*, file_path: Path, folder_path: DirectoryPath) -> bool:
+    if file_path.is_absolute():
+        return file_path.is_file() and folder_path in file_path.parents
+
+    try:
+        resolved_path = (folder_path / file_path).resolve(strict=True)
+    except OSError:
+        return False
+    return resolved_path.is_file()

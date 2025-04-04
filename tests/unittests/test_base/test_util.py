@@ -11,6 +11,7 @@ import pytest
 from crpatcher.base.util import (
     calculate_file_checksum_sha256,
     exists_encoding,
+    is_file_in_folder,
     is_filename_only,
 )
 from tests.base.input_data import Input, InputType
@@ -109,3 +110,60 @@ def test_is_filename_only():
     assert not is_filename_only("CON")  # reserved
     assert not is_filename_only("readme.")  # ends with dot
     assert not is_filename_only("   ")  # just spaces
+
+
+def test_is_file_in_folder(
+    fixt_crpatcher_existing_empty_dir: Path, fixt_crpatcher_non_existent_dir: Path
+):
+    folder_path_test_cases = [
+        Input(
+            data=fixt_crpatcher_existing_empty_dir, type=InputType.CUSTOM
+        ),  # valid folder
+        Input(
+            data=fixt_crpatcher_non_existent_dir, type=InputType.INVALID
+        ),  # invalid folder, should raise ValueError
+    ]
+
+    valid_file_path = fixt_crpatcher_existing_empty_dir / "valid_file.txt"
+    valid_file_path.touch()
+    invalid_file_path = fixt_crpatcher_existing_empty_dir / "invalid_file.txt"
+    if invalid_file_path.exists():
+        invalid_file_path.unlink()
+
+    assert valid_file_path.is_file()
+    assert not invalid_file_path.exists()
+
+    file_path_test_cases: list[Input[Path]] = []
+    for is_absolute, is_valid_file in itertools.product(
+        [True, False],  # is absolute?
+        [True, False],  # is valid file?
+    ):
+        file_path = valid_file_path if is_valid_file else invalid_file_path
+
+        if not is_absolute:
+            file_path = file_path.relative_to(fixt_crpatcher_existing_empty_dir)
+
+        file_path_test_cases.append(
+            Input(
+                data=file_path,
+                type=InputType.CUSTOM if is_valid_file else InputType.INVALID,
+            )
+        )
+
+    for folder_path_input, file_path_input in itertools.product(
+        folder_path_test_cases, file_path_test_cases
+    ):
+        # invalid folder path always raise ValueError regardless of file path
+        if folder_path_input.is_invalid_data:
+            with pytest.raises(ValueError):
+                is_file_in_folder(
+                    file_path=file_path_input.safe_data,
+                    folder_path=folder_path_input.safe_data,
+                )
+        else:
+            # otherwise, check if file is in folder
+            result = is_file_in_folder(
+                file_path=file_path_input.safe_data,
+                folder_path=folder_path_input.safe_data,
+            )
+            assert result != file_path_input.is_invalid_data
